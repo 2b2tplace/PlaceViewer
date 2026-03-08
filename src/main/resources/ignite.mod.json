@@ -1,0 +1,10 @@
+{
+    "id": "placeviewer",
+    "version": "1.0.0",
+    "mixins": [
+        "mixins.placeviewer.json"
+    ],
+    "wideners": [
+        "placeviewer.accesswidener"
+    ]
+}

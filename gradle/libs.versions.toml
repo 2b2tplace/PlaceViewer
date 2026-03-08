@@ -1,0 +1,13 @@
+metadata.format.version = "1.1"
+
+[versions]
+
+paper = "1.21.4-R0.1-SNAPSHOT"
+
+[libraries]
+ignite = { group = "space.vectrix.ignite", name = "ignite-api", version = "1.1.0" }
+mixin = { group = "org.spongepowered", name = "mixin", version = "0.8.7" }
+mixinExtras = { group = "io.github.llamalad7", name = "mixinextras-common", version = "0.5.2" }
+
+build-paperweight = { module = "io.papermc.paperweight.userdev:io.papermc.paperweight.userdev.gradle.plugin", version = "2.0.0-beta.19" }
+build-shadow = { module = "com.gradleup.shadow:com.gradleup.shadow.gradle.plugin", version = "9.2.2" }

@@ -1,0 +1,18 @@
+{
+    "required": true,
+    "minVersion": "0.8.7",
+    "package": "dev.place.placeviewer.mixin",
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_21",
+    "server": [
+        "MixinRegionFileStorage",
+        "MixinMoonriseRegionFileIO",
+        "MixinPlayerChunkLoaderData",
+        "MixinLoggerChunkProgressListener",
+        "MixinMinecraftServer",
+        "MixinDedicatedServer",
+        "MixinServerGamePacketListenerImpl",
+        "MixinSimpleCommandMap",
+        "MixinServerChunkCache"
+    ]
+}
