@@ -285,6 +285,7 @@ Temporary Items
 
 ### PlaceViewer ###
 .idea/
+build-logic/.kotlin
 run/
 cpp/PlaceViewer/lib/
 cpp/PlaceViewer/bin/
