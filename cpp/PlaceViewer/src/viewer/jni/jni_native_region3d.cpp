@@ -123,6 +123,7 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
     std::unordered_set<time_t> epochSet;
     epochSet.reserve(zvcr::SEGMENTS_PER_REGION * zvcr::MAX_SECTION_COUNT);
     for (const auto &segment : regionPtr->segments) {
+        if (!segment) continue;
         for (const auto &section : segment->blockSections.sections) {
             for (const auto &[_, timestamp] : section.reverseDeltas) {
                 epochSet.emplace(timestamp * 1000L); // seconds -> millis
