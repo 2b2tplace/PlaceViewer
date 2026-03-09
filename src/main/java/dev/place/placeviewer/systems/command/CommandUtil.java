@@ -18,11 +18,17 @@ public interface CommandUtil {
         if (index >= args.length || index < 0)
             return new IntParseResult(false, null);
 
+        return parseInt(player, args[index], orErrorMessage);
+    }
+
+    @NotNull
+    static IntParseResult parseInt(@NotNull final Player player, @NotNull final String arg,
+                                   @Nullable final Function<String, String> orErrorMessage) {
         try {
-            return new IntParseResult(true, Integer.parseInt(args[index]));
+            return new IntParseResult(true, Integer.parseInt(arg));
         } catch (final NumberFormatException e) {
             if (orErrorMessage != null)
-                player.sendMessage(Component.text(orErrorMessage.apply(args[index]), NamedTextColor.RED));
+                player.sendMessage(Component.text(orErrorMessage.apply(arg), NamedTextColor.RED));
             return new IntParseResult(true, null);
         }
     }

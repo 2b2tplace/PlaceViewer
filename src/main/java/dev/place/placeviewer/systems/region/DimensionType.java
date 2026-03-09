@@ -1,5 +1,6 @@
 package dev.place.placeviewer.systems.region;
 
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,15 @@ public enum DimensionType {
     public static Optional<DimensionType> ofString(@NotNull final String string) {
         return Arrays.stream(values())
             .filter(dimensionType -> dimensionType.toString().equals(string))
+            .findAny();
+    }
+
+    @NotNull
+    public Optional<World> world() {
+        return Bukkit.getServer()
+            .getWorlds()
+            .stream()
+            .filter(w -> DimensionType.dimensionType(w.getEnvironment()) == this)
             .findAny();
     }
 

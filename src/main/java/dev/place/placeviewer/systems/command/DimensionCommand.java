@@ -78,12 +78,7 @@ public class DimensionCommand extends BukkitCommand {
                 + String.join(", ", worldNames()), NamedTextColor.RED));
             return Optional.empty();
         }
-        final Optional<World> world = Bukkit.getServer()
-            .getWorlds()
-            .stream()
-            .filter(w -> DimensionType.dimensionType(w.getEnvironment()) == newWorld.get())
-            .findAny();
-
+        final Optional<World> world = newWorld.get().world();
         if (world.isEmpty())
             sender.sendMessage(Component.text("Internal server error: the world was not found on the viewer server. " +
                 "Please contact one of the admins of this PlaceViewer server to fix the issue."));
