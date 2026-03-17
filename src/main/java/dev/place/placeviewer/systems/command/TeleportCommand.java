@@ -11,8 +11,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,26 +35,25 @@ public class TeleportCommand extends BukkitCommand {
     }
 
     @NotNull
-    private static IntParseResult parseCoordinate(@NotNull final Player player, @NotNull final String @NotNull [] args, final int index, final char coordinate) {
+    private static DoubleParseResult parseCoordinate(@NotNull final Player player, @NotNull final String @NotNull [] args, final int index, final char coordinate) {
         if (index < 0 || index >= args.length || !args[index].startsWith("~"))
-            return parseInt(player, args[index], arg -> "Invalid " + coordinate + " coordinate: '" + arg + "'. The input must be a valid number.");
+            return parseDouble(player, args[index], arg -> "Invalid " + coordinate + " coordinate: '" + arg + "'. The input must be a valid number.");
 
-        final Location location = player.getLocation();
-        final Integer coordinateValue = switch (coordinate) {
-            case 'x' -> location.getBlockX();
-            case 'y' -> location.getBlockY();
-            case 'z' -> location.getBlockZ();
+        final double coordinateValue = switch (coordinate) {
+            case 'x' -> player.getX();
+            case 'y' -> player.getY();
+            case 'z' -> player.getZ();
             default -> throw new IllegalArgumentException("Coordinate must be 'x', 'y', or 'z'");
         };
         final String remaining = args[index].substring(1);
         if (remaining.isEmpty())
-            return new IntParseResult(true, coordinateValue);
+            return new DoubleParseResult(true, coordinateValue);
 
-        final IntParseResult delta = parseInt(player, remaining, arg -> "Invalid " + coordinate + " delta: '" + arg + "'. The input must be a valid number.");
+        final DoubleParseResult delta = parseDouble(player, remaining, arg -> "Invalid " + coordinate + " delta: '" + arg + "'. The input must be a valid number.");
         if (delta.result() == null)
-            return new IntParseResult(true, null);
+            return new DoubleParseResult(true, null);
 
-        return new IntParseResult(true, coordinateValue + delta.result());
+        return new DoubleParseResult(true, coordinateValue + delta.result());
     }
 
     private static void teleportToPlayer(@NotNull final Player player, @NotNull final String target) {
@@ -66,14 +66,18 @@ public class TeleportCommand extends BukkitCommand {
         player.sendMessage(Component.text("Teleported to player " + target + ".", NamedTextColor.GOLD));
     }
 
-    public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull final String @NotNull [] args) {
+    public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull String @NotNull [] args) {
         if (!(sender instanceof final Player player)) {
             sender.sendMessage("This command can only be used in-game.");
             return true;
         }
-        Integer x;
-        Integer y = player.getLocation().getBlockY();
-        Integer z;
+        final List<String> argsList = new ArrayList<>(Arrays.stream(args).toList());
+        argsList.removeIf(s -> s.startsWith("@"));
+        args = argsList.toArray(new String[0]);
+
+        Double x;
+        Double y = player.getY();
+        Double z;
         World newWorld = player.getWorld();
 
         switch (args.length) {
@@ -82,8 +86,8 @@ public class TeleportCommand extends BukkitCommand {
                 return true;
             }
             case 2 -> {
-                final IntParseResult xResult = parseCoordinate(player, args, 0, 'x');
-                final IntParseResult zResult = parseCoordinate(player, args, 1, 'z');
+                final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                final DoubleParseResult zResult = parseCoordinate(player, args, 1, 'z');
 
                 x = xResult.result();
                 z = zResult.result();
@@ -95,8 +99,8 @@ public class TeleportCommand extends BukkitCommand {
                 if (world.isPresent()) {
                     newWorld = world.get();
 
-                    final IntParseResult xResult = parseCoordinate(player, args, 0, 'x');
-                    final IntParseResult yResult = parseCoordinate(player, args, 1, 'z');
+                    final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                    final DoubleParseResult yResult = parseCoordinate(player, args, 1, 'z');
 
                     x = xResult.result();
                     z = yResult.result();
@@ -104,9 +108,9 @@ public class TeleportCommand extends BukkitCommand {
                     if (x == null || z == null) return true;
                     break;
                 }
-                final IntParseResult xResult = parseCoordinate(player, args, 0, 'x');
-                final IntParseResult yResult = parseCoordinate(player, args, 1, 'y');
-                final IntParseResult zResult = parseCoordinate(player, args, 2, 'z');
+                final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                final DoubleParseResult yResult = parseCoordinate(player, args, 1, 'y');
+                final DoubleParseResult zResult = parseCoordinate(player, args, 2, 'z');
 
                 x = xResult.result();
                 y = yResult.result();
@@ -115,9 +119,9 @@ public class TeleportCommand extends BukkitCommand {
                 if (x == null || y == null || z == null) return true;
             }
             case 4 -> {
-                final IntParseResult xResult = parseCoordinate(player, args, 0, 'x');
-                final IntParseResult yResult = parseCoordinate(player, args, 1, 'y');
-                final IntParseResult zResult = parseCoordinate(player, args, 2, 'z');
+                final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                final DoubleParseResult yResult = parseCoordinate(player, args, 1, 'y');
+                final DoubleParseResult zResult = parseCoordinate(player, args, 2, 'z');
 
                 x = xResult.result();
                 y = yResult.result();
