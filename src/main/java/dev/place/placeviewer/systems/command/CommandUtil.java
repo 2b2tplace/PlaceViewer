@@ -12,6 +12,8 @@ public interface CommandUtil {
 
     record IntParseResult(boolean hadParameter, @Nullable Integer result) {}
 
+    record DoubleParseResult(boolean hadParameter, @Nullable Double result) {}
+
     @NotNull
     static IntParseResult parseIntFromArgs(@NotNull final Player player, @NotNull final String @NotNull [] args,
                                            final int index, @Nullable final Function<String, String> orErrorMessage) {
@@ -30,6 +32,27 @@ public interface CommandUtil {
             if (orErrorMessage != null)
                 player.sendMessage(Component.text(orErrorMessage.apply(arg), NamedTextColor.RED));
             return new IntParseResult(true, null);
+        }
+    }
+
+    @NotNull
+    static DoubleParseResult parseDoubleFromArgs(@NotNull final Player player, @NotNull final String @NotNull [] args,
+                                           final int index, @Nullable final Function<String, String> orErrorMessage) {
+        if (index >= args.length || index < 0)
+            return new DoubleParseResult(false, null);
+
+        return parseDouble(player, args[index], orErrorMessage);
+    }
+
+    @NotNull
+    static DoubleParseResult parseDouble(@NotNull final Player player, @NotNull final String arg,
+                                   @Nullable final Function<String, String> orErrorMessage) {
+        try {
+            return new DoubleParseResult(true, Double.parseDouble(arg));
+        } catch (final NumberFormatException e) {
+            if (orErrorMessage != null)
+                player.sendMessage(Component.text(orErrorMessage.apply(arg), NamedTextColor.RED));
+            return new DoubleParseResult(true, null);
         }
     }
 
