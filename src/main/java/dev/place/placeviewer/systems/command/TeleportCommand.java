@@ -4,6 +4,7 @@ import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.minecraft.world.level.ChunkPos;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -139,13 +140,34 @@ public class TeleportCommand extends BukkitCommand {
                 return true;
             }
         }
-        player.teleport(new Location(newWorld, x, y, z, player.getYaw(), player.getPitch()));
+        teleportSafely(player, new Location(newWorld, x, y, z, player.getYaw(), player.getPitch()));
         player.sendMessage(Component.text("You were teleported to "
             + x + " " + y + " " + z + " in dimension "
             + DimensionType.dimensionType(newWorld.getEnvironment())
             + ".", NamedTextColor.GOLD));
 
         return true;
+    }
+
+    private static final double MAX_COORDINATE = 29999999.0d;
+
+    public static boolean teleportSafely(@NotNull final Player player, @NotNull final Location target) {
+        double x = target.x();
+        double z = target.z();
+
+        if (x > MAX_COORDINATE)
+            x = MAX_COORDINATE;
+
+        if (x < -MAX_COORDINATE)
+            x = -MAX_COORDINATE;
+
+        if (z > MAX_COORDINATE)
+            z = MAX_COORDINATE;
+
+        if (z < -MAX_COORDINATE)
+            z = -MAX_COORDINATE;
+
+        return player.teleport(new Location(target.getWorld(), x, target.y(), z, target.getYaw(), target.getPitch()));
     }
 
 }

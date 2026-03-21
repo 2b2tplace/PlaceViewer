@@ -4,7 +4,6 @@ import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -32,7 +31,7 @@ public class DimensionCommand extends BukkitCommand {
     }
 
     public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull final String @NotNull [] args) {
-        if (!(sender instanceof final Player p)) {
+        if (!(sender instanceof final Player player)) {
             sender.sendMessage("This command can only be used in-game.");
             return true;
         }
@@ -44,11 +43,11 @@ public class DimensionCommand extends BukkitCommand {
         final Optional<World> world = parseWorld(sender, args[0]);
         if (world.isEmpty()) return true;
 
-        if (p.getWorld() == world.get()) {
+        if (player.getWorld() == world.get()) {
             sender.sendMessage(Component.text("You are already in dimension " + args[0] + "."));
             return true;
         }
-        final World.Environment currentEnvironment = p.getWorld().getEnvironment();
+        final World.Environment currentEnvironment = player.getWorld().getEnvironment();
         final World.Environment newEnvironment = world.get().getEnvironment();
 
         final double coordinateMultiplierXZ = switch (currentEnvironment) {
@@ -57,10 +56,10 @@ public class DimensionCommand extends BukkitCommand {
             default -> 1.0d;
         };
         final int maxHeight = newEnvironment == World.Environment.NETHER ? 128 : world.get().getMaxHeight();
-        p.teleport(new Location(world.get(),
-            p.getX() * coordinateMultiplierXZ,
-            Math.clamp(p.getY(), world.get().getMinHeight(), maxHeight),
-            p.getZ() * coordinateMultiplierXZ
+        TeleportCommand.teleportSafely(player, new Location(world.get(),
+            player.getX() * coordinateMultiplierXZ,
+            Math.clamp(player.getY(), world.get().getMinHeight(), maxHeight),
+            player.getZ() * coordinateMultiplierXZ
         ));
         return true;
     }
