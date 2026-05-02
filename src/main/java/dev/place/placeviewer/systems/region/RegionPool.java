@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +34,7 @@ public class RegionPool {
     private static final class FuturePool<K, V> {
 
         @NotNull
-        private Cache<K, CompletableFuture<V>> cache;
+        private final Cache<K, CompletableFuture<V>> cache;
 
         private FuturePool(@NotNull Cache<K, CompletableFuture<V>> cache) {
             this.cache = cache;
@@ -106,7 +107,7 @@ public class RegionPool {
             .filter(world -> world.getEnvironment() == regionPosition.dimensionType().environment())
             .findFirst();
 
-        return worldOptional.map(world -> world.getPlayers()
+        return worldOptional.map(world -> new ArrayList<>(world.getPlayers())
             .stream()
             .anyMatch(p -> Position.regionPosition(p.getLocation()).distance(regionPosition) < 2))
             .orElse(false);
@@ -135,7 +136,13 @@ public class RegionPool {
     @NotNull
     public CompletableFuture<byte[]> chunkAt(@NotNull final PositionEpoch chunkPos) {
         return chunkPacketCache.get(chunkPos, key -> regionAt(Position.regionPosition(chunkPos.position()))
-            .thenApplyAsync(region -> region == null ? null : region.createChunkDataPacket(chunkPos.x(), chunkPos.z(), chunkPos.epoch().timestamp())));
+            .thenApplyAsync(region -> {
+                if (region == null) return null;
+
+                final byte[] result = region.createChunkDataPacket(chunkPos.x(), chunkPos.z(), chunkPos.epoch().timestamp());
+                region.release();
+                return result;
+            }));
     }
 
     public static void sendChunk(@NotNull final ServerPlayer player, final int chunkX, final int chunkZ) {

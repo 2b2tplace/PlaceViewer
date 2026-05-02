@@ -50,6 +50,8 @@ public class FlashbackCommand extends BukkitCommand {
         final Position regionPos = Position.regionPosition(player.getLocation());
         PlaceViewer.regionPool().regionAt(regionPos).thenAccept(region -> {
             final EpochIndex epochIndex = region.epochIndex();
+            region.release();
+
             if (epochIndex.condensedDates().isEmpty()) {
                 player.sendMessage(Component.text("No recorded data was found at your current position.", NamedTextColor.GRAY));
                 return;

@@ -9,8 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Region implements AutoCloseable {
+
+    @NotNull
+    private final AtomicBoolean force = new AtomicBoolean(true);
 
     private long regionObjectID;
     private long @Nullable [] indexedTimestamps;
@@ -82,7 +86,13 @@ public final class Region implements AutoCloseable {
         return NativeRegion.createChunkDataPacket(regionObjectID, dimensionType.id(), absChunkX, absChunkZ, timestampMillis / 1000L);
     }
 
+    public void release() {
+        force.set(false);
+    }
+
     public void close() {
+        if (force.get()) return;
+
         NativeRegion.freeRegion(regionObjectID);
         regionObjectID = 0L;
     }
