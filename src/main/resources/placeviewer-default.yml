@@ -7,6 +7,6 @@ region-cache:
     region-cache-timeout-millis: 20000 # number of milliseconds for a region to expire in the cache
     chunk-cache-timeout-millis: 100000 # number of milliseconds for a chunk packet to expire in the cache
 commands:
-    allowed-commands: [ help, fb, flashback, dim, dimension, tp, teleport, now ]
+    allowed-commands: [ help, fb, flashback, dim, dimension, tp, teleport, now, gm, gamemode ]
 traffic:
     hide-online-players: true

@@ -5,15 +5,16 @@
     "target": "@env(DEFAULT)",
     "compatibilityLevel": "JAVA_21",
     "server": [
+        "MixinCraftWorld",
         "MixinDedicatedServer",
         "MixinLoggerChunkProgressListener",
         "MixinMinecraftServer",
         "MixinMoonriseRegionFileIO",
         "MixinPlayerChunkLoaderData",
+        "MixinPlayerList",
         "MixinRegionFileStorage",
         "MixinServerChunkCache",
         "MixinServerGamePacketListenerImpl",
-        "MixinSimpleCommandMap",
-        "MixinCraftWorld"
+        "MixinSimpleCommandMap"
     ]
 }

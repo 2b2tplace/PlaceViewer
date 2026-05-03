@@ -1,10 +1,13 @@
 package dev.place.placeviewer.mixin;
 
+import net.kyori.adventure.text.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -24,4 +27,13 @@ public class MixinServerGamePacketListenerImpl {
 
     }
 
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;disconnect(Lnet/kyori/adventure/text/Component;Lorg/bukkit/event/player/PlayerKickEvent$Cause;)V"))
+    private void cancelTickDisconnect(final ServerGamePacketListenerImpl instance, final Component component, final PlayerKickEvent.Cause cause) {
+
+    }
+
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;)V"))
+    private void cancelTickWarn(final Logger instance, final String string, final Object o) {
+
+    }
 }
