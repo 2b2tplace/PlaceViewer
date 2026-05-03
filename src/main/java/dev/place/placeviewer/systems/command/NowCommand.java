@@ -3,7 +3,7 @@ package dev.place.placeviewer.systems.command;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import dev.place.placeviewer.systems.flashback.EpochPool;
-import dev.place.placeviewer.systems.region.pos.Epoch;
+import dev.place.placeviewer.systems.flashback.Epoch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;

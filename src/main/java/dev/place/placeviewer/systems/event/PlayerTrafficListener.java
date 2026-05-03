@@ -25,6 +25,7 @@ public class PlayerTrafficListener implements Listener {
             return;
         }
         event.joinMessage(Component.text(name + " joined the PlaceViewer server.", NamedTextColor.GRAY));
+        PlaceViewer.epochPool().sendActionBar(player);
     }
 
     @EventHandler

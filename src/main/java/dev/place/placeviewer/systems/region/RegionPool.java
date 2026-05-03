@@ -7,7 +7,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.protocol.PlaceViewerProtocol;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
-import dev.place.placeviewer.systems.region.pos.Epoch;
+import dev.place.placeviewer.systems.flashback.Epoch;
 import dev.place.placeviewer.systems.region.pos.Position;
 import dev.place.placeviewer.systems.region.pos.PositionEpoch;
 import io.netty.buffer.ByteBuf;
