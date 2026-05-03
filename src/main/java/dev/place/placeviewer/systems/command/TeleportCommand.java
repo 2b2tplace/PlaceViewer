@@ -74,7 +74,10 @@ public class TeleportCommand extends BukkitCommand {
         }
         final List<String> argsList = new ArrayList<>(Arrays.stream(args).toList());
         argsList.removeIf(s -> s.startsWith("@"));
-        args = argsList.toArray(new String[0]);
+        args = argsList.stream()
+            .flatMap(s -> Arrays.stream(s.replace(",", " ").split(" ")))
+            .toList()
+            .toArray(new String[0]);
 
         Double x;
         Double y = player.getY();
