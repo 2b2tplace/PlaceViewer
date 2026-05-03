@@ -4,7 +4,6 @@ import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.minecraft.world.level.ChunkPos;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
