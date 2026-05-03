@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(DedicatedServer.class)
 public class MixinDedicatedServer {
 
-    @Inject(method = "initServer", at = @At("HEAD"))
+    @Inject(method = "initServer", at = @At("TAIL"))
     private void initializePlaceViewer(final CallbackInfoReturnable<Boolean> cir) {
         PlaceViewer.initialize();
     }

@@ -4,6 +4,7 @@ import dev.place.placeviewer.systems.flashback.EpochPool;
 import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
+import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ public final class PlaceViewer {
             Duration.ofMillis(PlaceViewer.config().chunkCacheTimeout())
         );
         PlaceViewerManager.registerAll();
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(EPOCH_POOL::sendActionBar), 40L, 40L);
     }
 
     @NotNull

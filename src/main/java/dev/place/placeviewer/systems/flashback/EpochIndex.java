@@ -1,5 +1,6 @@
 package dev.place.placeviewer.systems.flashback;
 
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -13,7 +14,7 @@ public class EpochIndex {
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
     @NotNull
-    private static final DateFormat FORMAT = new SimpleDateFormat("dd MMM yyyy hh:mm:ss a z") {{
+    public static final DateFormat FORMAT = new SimpleDateFormat("dd MMM yyyy hh:mm:ss a z") {{
         setTimeZone(UTC);
     }};
 

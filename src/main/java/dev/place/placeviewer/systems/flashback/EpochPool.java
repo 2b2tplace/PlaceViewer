@@ -1,7 +1,6 @@
 package dev.place.placeviewer.systems.flashback;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
-import dev.place.placeviewer.systems.region.pos.Epoch;
 import dev.place.placeviewer.systems.region.pos.Position;
 import it.unimi.dsi.fastutil.longs.LongHeapPriorityQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -47,6 +46,7 @@ public class EpochPool {
 
     public void currentEpoch(@NotNull final Player player, @NotNull final Date date) {
         currentEpoch(player.getUniqueId(), date);
+        sendActionBar(player);
     }
 
     public void currentEpoch(@NotNull final UUID uuid, @NotNull final Date date) {
@@ -76,6 +76,10 @@ public class EpochPool {
             sentChunks.remove(chunkKey);
             sendChunkQueue.enqueue(chunkKey);
         }
+    }
+
+    public void sendActionBar(@NotNull final Player player) {
+        player.sendActionBar(currentEpoch(player).actionBar());
     }
 
     public void remove(@NotNull final Player player) {
