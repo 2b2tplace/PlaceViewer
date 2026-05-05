@@ -75,6 +75,7 @@ public class TeleportCommand extends BukkitCommand {
         argsList.removeIf(s -> s.startsWith("@"));
         args = argsList.stream()
             .flatMap(s -> Arrays.stream(s.replace(",", " ").split(" ")))
+            .filter(s -> !s.isBlank())
             .toList()
             .toArray(new String[0]);
 
