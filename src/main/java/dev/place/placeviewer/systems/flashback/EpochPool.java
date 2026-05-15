@@ -79,7 +79,7 @@ public class EpochPool {
     }
 
     public void sendActionBar(@NotNull final Player player) {
-        player.sendActionBar(currentEpoch(player).actionBar());
+        currentEpoch(player).actionBar().ifPresent(player::sendActionBar);
     }
 
     public void remove(@NotNull final Player player) {

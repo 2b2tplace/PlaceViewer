@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 
 public sealed interface Epoch {
 
@@ -16,7 +17,7 @@ public sealed interface Epoch {
     long timestamp();
 
     @NotNull
-    Component actionBar();
+    Optional<Component> actionBar();
 
     @NotNull
     static Now now() {
@@ -35,8 +36,8 @@ public sealed interface Epoch {
         }
 
         @NotNull
-        public Component actionBar() {
-            return Component.text("Viewing latest snapshot", NamedTextColor.GRAY);
+        public Optional<Component> actionBar() {
+            return Optional.empty();
         }
 
         public int hashCode() {
@@ -60,8 +61,8 @@ public sealed interface Epoch {
         }
 
         @NotNull
-        public Component actionBar() {
-            return Component.text("Viewing snapshot from " + formattedTime, NamedTextColor.GRAY);
+        public Optional<Component> actionBar() {
+            return Optional.of(Component.text("Viewing snapshot from " + formattedTime, NamedTextColor.GRAY));
         }
 
         @NotNull
