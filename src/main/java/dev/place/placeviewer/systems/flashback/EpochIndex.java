@@ -1,6 +1,5 @@
 package dev.place.placeviewer.systems.flashback;
 
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -55,7 +54,7 @@ public class EpochIndex {
     }
 
     private void indexDates() {
-        Collections.sort(dates);
+        dates.sort(Comparator.reverseOrder());
         index.clear();
         condensedDates.clear();
 
@@ -75,8 +74,8 @@ public class EpochIndex {
                 calendar.setTime(existing);
                 return hour == calendar.get(Calendar.HOUR_OF_DAY);
             })) {
-                condensedDates.add(date);
-                exactDates.add(date);
+                condensedDates.addFirst(date);
+                exactDates.addFirst(date);
             }
         }
     }
