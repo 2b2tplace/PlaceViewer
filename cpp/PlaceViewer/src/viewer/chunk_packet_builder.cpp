@@ -150,7 +150,7 @@ namespace placeviewer {
         const auto &segment = region.get(relChunkX, relChunkZ);
         if (!segment) return {};
 
-        const auto minChunkY = getProperties(dimensionType).minY / zvcr::SEGMENT_SIDELENGTH_BLOCKS;
+        const auto minY = getProperties(dimensionType).minY;
         const auto sectionCount = getProperties(dimensionType).height / zvcr::SEGMENT_SIDELENGTH_BLOCKS;
 
         mc::ByteBuf buffer;
@@ -161,58 +161,31 @@ namespace placeviewer {
         pc::WriteData<uint8_t>(10, buffer);
         pc::WriteData<uint8_t>(0, buffer);
 
-        std::vector<pc::BlockEntityInfo> tileEntities;
+        auto emptyBiomeSection = mc::anvil::UnpackedData<mc::anvil::Biomes>{};
+        emptyBiomeSection.fill(voidBiome);
 
         mc::ByteBuf data;
         for (size_t sectionIndex = 0; sectionIndex < sectionCount; sectionIndex++) {
             const auto &blockSection = segment->blockSections.sections[sectionIndex].snapshotFrom(timestamp);
-            const auto &biomeSection = segment->biomeSections.sections[sectionIndex].snapshotFrom(timestamp);
-            if (!blockSection || !biomeSection) return {};
+            if (!blockSection) return {};
+
+            const auto &biomeSection = segment->biomeSections.sections[sectionIndex].snapshotFrom(timestamp).value_or(emptyBiomeSection);
 
             pc::WriteData<int16_t>(zvcr::SECTION_3D_SIZE_BLOCKS, data);
             const auto blockPalette = writePalettedContainer<mc::anvil::Blocks>(*blockSection, data);
-            writePalettedContainer<mc::anvil::Biomes>(*biomeSection, data);
-
-            bool addTileEntities{};
-            if (std::holds_alternative<mc::anvil::Palette>(blockPalette)) {
-                const auto &palette = std::get<mc::anvil::Palette>(blockPalette);
-                for (const auto value : palette) {
-                    if (tileEntityBlockStates.contains(value)) {
-                        addTileEntities = true;
-                        break;
-                    }
-                }
-            } else if (std::holds_alternative<mc::BlockState>(blockPalette)) {
-                const auto singleValue = std::get<mc::BlockState>(blockPalette);
-                addTileEntities = tileEntityBlockStates.contains(singleValue);
-            }
-            if (addTileEntities) {
-                zvcr::UnpackedView view{zvcr::SEGMENT_SIDELENGTH_BLOCKS, *blockSection};
-                for (uint8_t by = 0; by < zvcr::SEGMENT_SIDELENGTH_BLOCKS; by++) {
-                    for (uint8_t bz = 0; bz < zvcr::SEGMENT_SIDELENGTH_BLOCKS; bz++) {
-                        for (uint8_t bx = 0; bx < zvcr::SEGMENT_SIDELENGTH_BLOCKS; bx++) {
-                            const auto state = view.getVoxel(bx, by, bz);
-                            if (!tileEntityBlockStates.contains(state)) continue;
-
-                            const auto &tileEntity = tileEntityBlockStates.at(state);
-                            const auto absY = zvcr::SEGMENT_SIDELENGTH_BLOCKS * (static_cast<int>(sectionIndex) + minChunkY) + by;
-
-                            pc::BlockEntityInfo info{};
-                            info.SetPackedXZ((bx & 15) << 4 | bz & 15);
-                            info.SetY(static_cast<int16_t>(absY));
-                            info.SetType(tileEntity.id);
-
-                            tileEntities.push_back(info);
-                        }
-                    }
-                }
-            }
+            writePalettedContainer<mc::anvil::Biomes>(biomeSection, data);
         }
         pc::WriteData<pc::VarInt>(static_cast<int32_t>(data.size()), buffer);
         pc::WriteByteArray(data, buffer);
 
-        pc::WriteData<std::vector<pc::BlockEntityInfo>>(tileEntities, buffer);
-
+        const auto &tileEntities = segment->tileEntities.snapshotFrom(timestamp).value_or(zvcr::TileEntityList{});
+        pc::WriteData<pc::VarInt>(static_cast<int32_t>(tileEntities.size()), buffer);
+        for (const auto &[pos, tileEntity] : tileEntities) {
+            pc::WriteData<uint8_t>(static_cast<uint8_t>((pos.x & 15) << 4 | pos.z & 15), buffer);
+            pc::WriteData<int16_t>(static_cast<int16_t>(pos.y + minY), buffer);
+            pc::WriteData<pc::VarInt>(static_cast<int32_t>(tileEntity.type), buffer);
+            buffer.insert(buffer.end(), tileEntity.nbt.begin(), tileEntity.nbt.end());
+        }
         writeFullBrightLightData(buffer, segment->blockSections.sectionCount);
         return buffer;
     }
