@@ -29,7 +29,7 @@ public class TeleportCommand extends BukkitCommand {
         super(
             TELEPORT_COMMAND,
             "Teleports you to a selected position",
-            "/" + TELEPORT_COMMAND + " <x> <y> <z> [dimension] or /" + TELEPORT_COMMAND + " <x> <z> [dimension] or /" + TELEPORT_COMMAND + " <player>",
+            "/" + TELEPORT_COMMAND + " <x> <y> <z> [dimension] or /" + TELEPORT_COMMAND + " <x> <z> [dimension]",
             List.of("tp")
         );
     }
@@ -85,10 +85,10 @@ public class TeleportCommand extends BukkitCommand {
         World newWorld = player.getWorld();
 
         switch (args.length) {
-            case 1 -> {
-                teleportToPlayer(player, args[0]);
-                return true;
-            }
+//            case 1 -> {
+//                teleportToPlayer(player, args[0]);
+//                return true;
+//            }
             case 2 -> {
                 final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
                 final DoubleParseResult zResult = parseCoordinate(player, args, 1, 'z');

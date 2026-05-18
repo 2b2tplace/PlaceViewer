@@ -7,6 +7,24 @@ region-cache:
     region-cache-timeout-millis: 20000 # number of milliseconds for a region to expire in the cache
     chunk-cache-timeout-millis: 100000 # number of milliseconds for a chunk packet to expire in the cache
 commands:
-    allowed-commands: [ help, fb, flashback, dim, dimension, tp, teleport, now, gm, gamemode ]
+    allowed-commands: [ help, fb, flashback, dim, dimension, tp, teleport, now, w, whisper, t, tell, msg, r, reply, l, last, lastmsg ]
+antispam:
+    max-violations: 3
+    per-ticks: 600 # allow one antispam violation every 30 seconds, anything more than that warns the player
+
+    spam-tolerance-millis: 300 # pretty much the minimum delay between messages in milliseconds, except this is mathematically calculated, along with other values
+    length-tolerance-charcount: 96 # max amount of characters, except this is also mathematically calculated, so you wont necessarily be warned once you reach this limit
+
+    violations-before-kick: 5 # max amount of antispam violations in the per-ticks amount of time before a player gets kicked for spamming
+    kick-message: ""
+
+    likely-spam-confidence: 0.55 # if the antispam is atleast 55% confident the message was spam, count it as spam
+    definetly-spam-confidence: 0.95 # 95% confidence required for a violation to definetly count
+    warn-message: "" # warn message if antispam detects someone spamming, set to "" if you do not want to send any warning
+
+    silent-discard: true # set to true if you want the message to be silently removed (it will look like the message was sent for the player, but noone else except console will see their spam)
+
+    filter-public-messages: true # when should the antispam check messages?
+    filter-whisper-messages: true
 traffic:
     hide-online-players: true

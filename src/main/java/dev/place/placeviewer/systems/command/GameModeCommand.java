@@ -1,6 +1,5 @@
 package dev.place.placeviewer.systems.command;
 
-import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-@PlaceViewerCommand
+//@PlaceViewerCommand
 public class GameModeCommand extends BukkitCommand {
 
     @NotNull

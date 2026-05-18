@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Scheduler;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
+import dev.place.placeviewer.systems.entrypoint.PlaceViewerConfig;
 import dev.place.placeviewer.systems.protocol.PlaceViewerProtocol;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
 import dev.place.placeviewer.systems.flashback.Epoch;
@@ -13,20 +14,15 @@ import dev.place.placeviewer.systems.region.pos.PositionEpoch;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import net.minecraft.server.level.ServerPlayer;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class RegionPool {
@@ -41,11 +37,11 @@ public class RegionPool {
         }
 
         public FuturePool(@NotNull final Duration timeout) {
-            this(timeout, null, null);
+            this(timeout, null);
         }
 
         public FuturePool(@NotNull final Duration timeout,
-                          @Nullable final Consumer<V> cleanup, @Nullable final Predicate<K> cancelCleanup) {
+                          @Nullable final Consumer<V> cleanup) {
             cache = Caffeine.newBuilder()
                 .expireAfterAccess(timeout)
                 .scheduler(Scheduler.systemScheduler())
@@ -53,7 +49,7 @@ public class RegionPool {
                     try {
                         if (key == null || futureObject == null) return;
 
-                        onRemoval((K) key, (CompletableFuture<V>) futureObject, cause, cleanup, cancelCleanup);
+                        onRemoval((CompletableFuture<V>) futureObject, cause, cleanup);
                     } catch (final Throwable t) {
                         PlaceViewer.LOGGER.info("Unable to remove value from FuturePool", t);
                     }
@@ -61,12 +57,8 @@ public class RegionPool {
                 .build();
         }
 
-        private void onRemoval(@NotNull final K key, @NotNull final CompletableFuture<V> future, @NotNull final RemovalCause cause,
-                               @Nullable final Consumer<V> cleanup, @Nullable final Predicate<K> cancelCleanup) throws ExecutionException, InterruptedException {
-            if (cause == RemovalCause.EXPIRED && cancelCleanup != null && cancelCleanup.test(key)) {
-                cache.put(key, future);
-                return;
-            }
+        private void onRemoval(@NotNull final CompletableFuture<V> future, @NotNull final RemovalCause cause,
+                               @Nullable final Consumer<V> cleanup) throws ExecutionException, InterruptedException {
             if (cleanup == null) return;
 
             final V value = future.get();
@@ -90,27 +82,14 @@ public class RegionPool {
 
     }
 
-    @NotNull
-    private final FuturePool<Position, Region> regionCache;
+    private FuturePool<Position, Region> regionCache = null;
 
     @NotNull
     private final FuturePool<PositionEpoch, byte[]> chunkPacketCache;
 
     public RegionPool(@NotNull final Duration regionCacheTimeout, @NotNull final Duration chunkCacheTimeout) {
-        regionCache = new FuturePool<>(regionCacheTimeout, Region::close, RegionPool::findPlayersNearby);
-        chunkPacketCache = new FuturePool<>(chunkCacheTimeout, null, chunkPos -> findPlayersNearby(Position.regionPosition(chunkPos.position())));
-    }
-
-    public static boolean findPlayersNearby(@NotNull final Position regionPosition) {
-        final Optional<World> worldOptional = Bukkit.getWorlds()
-            .stream()
-            .filter(world -> world.getEnvironment() == regionPosition.dimensionType().environment())
-            .findFirst();
-
-        return worldOptional.map(world -> new ArrayList<>(world.getPlayers())
-            .stream()
-            .anyMatch(p -> Position.regionPosition(p.getLocation()).distance(regionPosition) < 2))
-            .orElse(false);
+        regionCache = new FuturePool<>(regionCacheTimeout, Region::close);
+        chunkPacketCache = new FuturePool<>(chunkCacheTimeout, null);
     }
 
     @NotNull
