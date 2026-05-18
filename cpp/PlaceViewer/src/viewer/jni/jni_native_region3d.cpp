@@ -5,6 +5,7 @@
 #include <zvcr/region/file_location.hpp>
 #include <zvcr/serialize/serialization.hpp>
 #include <filesystem>
+#include <malloc.h>
 
 JNIEXPORT void JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_initialize(JNIEnv *jEnv, jclass, jstring jRegistryDirectory) {
     namespace fs = std::filesystem;
@@ -137,4 +138,8 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
 
     jEnv->SetLongArrayRegion(jEpochs, 0, len, reinterpret_cast<const jlong*>(epochs.data()));
     return jEpochs;
+}
+
+JNIEXPORT void JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_mallocTrim(JNIEnv *, jclass) {
+    malloc_trim(0);
 }

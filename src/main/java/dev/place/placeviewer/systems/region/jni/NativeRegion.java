@@ -16,4 +16,6 @@ public final class NativeRegion {
 
     public static native long[] indexRegionEpochs(final long regionPtr);
 
+    public static native void mallocTrim();
+
 }

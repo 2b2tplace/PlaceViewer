@@ -51,6 +51,7 @@ public final class PlaceViewer {
         );
         PlaceViewerManager.registerAll();
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(EPOCH_POOL::sendActionBar), 40L, 40L);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, NativeRegion::mallocTrim, 2400L, 2400L);
     }
 
     @NotNull
