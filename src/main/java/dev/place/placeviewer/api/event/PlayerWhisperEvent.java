@@ -1,7 +1,6 @@
-package dev.place.placeviewer.systems.event.chat;
+package dev.place.placeviewer.api.event;
 
-import dev.place.placeviewer.systems.chat.message.ChatMessage;
-import dev.place.placeviewer.systems.chat.message.WhisperMessage;
+import dev.place.placeviewer.api.chat.message.WhisperMessage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -9,7 +8,9 @@ import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PlayerWhisperEvent extends PlayerEvent implements Cancellable, ServerChatEvent {
+import java.util.Optional;
+
+public class PlayerWhisperEvent extends PlayerEvent implements Cancellable, ServerChatEvent<WhisperMessage> {
 
     @Nullable
     private WhisperMessage fromMessage;
@@ -28,12 +29,13 @@ public class PlayerWhisperEvent extends PlayerEvent implements Cancellable, Serv
         this.recipient = recipient;
     }
 
-    public Player getSender() {
+    @NotNull
+    public Player sender() {
         return getPlayer();
     }
 
     @NotNull
-    public Player getRecipient() {
+    public Player recipient() {
         return recipient;
     }
 
@@ -45,26 +47,26 @@ public class PlayerWhisperEvent extends PlayerEvent implements Cancellable, Serv
         this.cancelled = cancelled;
     }
 
-    @Nullable
-    public WhisperMessage getFromMessage() {
-        return fromMessage;
+    @NotNull
+    public Optional<WhisperMessage> fromMessage() {
+        return Optional.ofNullable(fromMessage);
     }
 
-    public void setFromMessage(@Nullable final WhisperMessage fromMessage) {
+    public void fromMessage(@Nullable final WhisperMessage fromMessage) {
         this.fromMessage = fromMessage;
     }
 
-    @Nullable
-    public ChatMessage getMessage() {
-        return fromMessage;
+    @NotNull
+    public Optional<WhisperMessage> message() {
+        return Optional.ofNullable(fromMessage);
     }
 
-    @Nullable
-    public WhisperMessage getToMessage() {
-        return toMessage;
+    @NotNull
+    public Optional<WhisperMessage> toMessage() {
+        return Optional.ofNullable(toMessage);
     }
 
-    public void setToMessage(@Nullable final WhisperMessage toMessage) {
+    public void toMessage(@Nullable final WhisperMessage toMessage) {
         this.toMessage = toMessage;
     }
 

@@ -1,9 +1,9 @@
 package dev.place.placeviewer.systems.command;
 
-import dev.place.placeviewer.systems.chat.ServerChat;
-import dev.place.placeviewer.systems.chat.message.WhisperMessage;
+import dev.place.placeviewer.api.chat.ServerChat;
+import dev.place.placeviewer.api.chat.message.WhisperMessage;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
-import dev.place.placeviewer.systems.event.chat.PlayerWhisperEvent;
+import dev.place.placeviewer.api.event.PlayerWhisperEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -58,8 +58,8 @@ public class WhisperCommand extends BukkitCommand {
         Bukkit.getPluginManager().callEvent(whisperEvent);
         if (whisperEvent.isCancelled()) return;
 
-        if (whisperEvent.getFromMessage() != null) ServerChat.privateMessage(whisperEvent.getFromMessage(), sender);
-        if (whisperEvent.getToMessage() != null)   ServerChat.privateMessage(whisperEvent.getToMessage(), receiver);
+        whisperEvent.fromMessage().ifPresent(fromMessage -> ServerChat.privateMessage(fromMessage, sender));
+        whisperEvent.toMessage().ifPresent(toMessage -> ServerChat.privateMessage(toMessage, receiver));
 
         replyToPlayersMap.put(receiver.getUniqueId(), sender.getUniqueId());
         lastMessagePlayersMap.put(sender.getUniqueId(), receiver.getUniqueId());

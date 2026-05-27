@@ -1,6 +1,6 @@
-package dev.place.placeviewer.systems.chat.message;
+package dev.place.placeviewer.api.chat.message;
 
-import dev.place.placeviewer.systems.chat.source.PlayerChatSource;
+import dev.place.placeviewer.api.chat.source.PlayerChatSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;

@@ -1,12 +1,12 @@
 package dev.place.placeviewer.systems.event.feature;
 
-import dev.place.placeviewer.systems.chat.ServerChat;
-import dev.place.placeviewer.systems.chat.message.ChatMessage;
+import dev.place.placeviewer.api.chat.ServerChat;
+import dev.place.placeviewer.api.chat.message.ChatMessage;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewerConfig;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
-import dev.place.placeviewer.systems.event.chat.PlayerPublicMessageEvent;
-import dev.place.placeviewer.systems.event.chat.PlayerWhisperEvent;
+import dev.place.placeviewer.api.event.PlayerPublicMessageEvent;
+import dev.place.placeviewer.api.event.PlayerWhisperEvent;
 import dev.place.placeviewer.systems.util.LimitedSizeQueue;
 import dev.place.placeviewer.systems.util.Ratelimiter;
 import me.xuender.unidecode.Unidecode;
@@ -45,23 +45,17 @@ public class AntiSpamFeature implements Listener {
     private static final Map<UUID, AntispamViolation> spamStreak = new ConcurrentHashMap<>();
 
     @EventHandler
-    public void onChat(@NotNull final PlayerPublicMessageEvent ev) {
+    public void onChat(@NotNull final PlayerPublicMessageEvent event) {
         if (!config.filterPublicMessages()) return;
-        final Player p = ev.getPlayer();
-        final ChatMessage message = ev.getMessage();
-        if (message == null) return;
 
-        checkAntispam(p, message, ev);
+        event.message().ifPresent(message -> checkAntispam(event.getPlayer(), message, event));
     }
 
     @EventHandler
-    public void onWhisper(@NotNull final PlayerWhisperEvent ev) {
+    public void onWhisper(@NotNull final PlayerWhisperEvent event) {
         if (!config.filterWhisperMessages()) return;
-        final Player p = ev.getPlayer();
-        final ChatMessage message = ev.getToMessage();
-        if (message == null) return;
 
-        checkAntispam(p, message, ev);
+        event.toMessage().ifPresent(message -> checkAntispam(event.getPlayer(), message, event));
     }
 
     private class MessageFootprint {
@@ -146,7 +140,7 @@ public class AntiSpamFeature implements Listener {
 
     }
 
-    private void checkAntispam(@NotNull final Player p, @NotNull final ChatMessage message, @NotNull final Cancellable ev) {
+    private void checkAntispam(@NotNull final Player p, @NotNull final ChatMessage message, @NotNull final Cancellable event) {
         final UUID uuid = p.getUniqueId();
         final double probability = spamProbability(p, message);
         if (probability < 0.65) return;
@@ -159,7 +153,7 @@ public class AntiSpamFeature implements Listener {
 
         spamStreak.putIfAbsent(uuid, new AntispamViolation(uuid));
         spamStreak.get(uuid).violated();
-        ev.setCancelled(true);
+        event.setCancelled(true);
 
         if (!config.silentDiscard()) return;
         ServerChat.privateMessage(message, p);

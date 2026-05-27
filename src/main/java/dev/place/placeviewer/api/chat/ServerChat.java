@@ -1,8 +1,8 @@
-package dev.place.placeviewer.systems.chat;
+package dev.place.placeviewer.api.chat;
 
-import dev.place.placeviewer.systems.chat.message.ChatMessage;
-import dev.place.placeviewer.systems.chat.message.SystemMessage;
-import dev.place.placeviewer.systems.event.chat.ServerChatEvent;
+import dev.place.placeviewer.api.chat.message.ChatMessage;
+import dev.place.placeviewer.api.chat.message.SystemMessage;
+import dev.place.placeviewer.api.event.ServerChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -21,15 +21,13 @@ public class ServerChat {
 
     private ServerChat() {}
 
-    public static <T extends Event & ServerChatEvent & Cancellable> void submit(@NotNull final T ev) {
-        Bukkit.getPluginManager().callEvent(ev);
-
-        if (!ev.isCancelled()) ServerChat.broadcast(ev);
+    public static <M extends ChatMessage, T extends Event & ServerChatEvent<M> & Cancellable> void submit(@NotNull final T event) {
+        Bukkit.getPluginManager().callEvent(event);
+        if (!event.isCancelled()) ServerChat.broadcast(event);
     }
 
-    public static void broadcast(@NotNull final ServerChatEvent ev) {
-        final ChatMessage message = ev.getMessage();
-        if (message != null) ServerChat.publicMessage(message, message.onlineRecipients());
+    public static <M extends ChatMessage> void broadcast(@NotNull final ServerChatEvent<M> event) {
+        event.message().ifPresent(message -> publicMessage(message, message.onlineRecipients()));
     }
 
     private static void sendPrivate(@NotNull final CommandSender sender, @Nullable final ChatMessage message) {

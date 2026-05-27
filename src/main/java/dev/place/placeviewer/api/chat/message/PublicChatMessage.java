@@ -1,11 +1,10 @@
-package dev.place.placeviewer.systems.chat.message;
+package dev.place.placeviewer.api.chat.message;
 
-import dev.place.placeviewer.systems.chat.source.ChatSource;
-import dev.place.placeviewer.systems.chat.source.PlayerChatSource;
+import dev.place.placeviewer.api.chat.source.ChatSource;
+import dev.place.placeviewer.api.chat.source.PlayerChatSource;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -59,8 +58,8 @@ public class PublicChatMessage implements ChatMessage {
     }
 
     @NotNull
-    public static PublicChatMessage of(final AsyncChatEvent ev) {
-        return PublicChatMessage.of(ev.message(), new PlayerChatSource(ev.getPlayer()));
+    public static PublicChatMessage of(final AsyncChatEvent event) {
+        return PublicChatMessage.of(event.message(), new PlayerChatSource(event.getPlayer()));
     }
 
     @NotNull

@@ -1,7 +1,7 @@
-package dev.place.placeviewer.systems.chat.message;
+package dev.place.placeviewer.api.chat.message;
 
-import dev.place.placeviewer.systems.chat.source.ChatSource;
-import dev.place.placeviewer.systems.chat.source.SystemChatSource;
+import dev.place.placeviewer.api.chat.source.ChatSource;
+import dev.place.placeviewer.api.chat.source.SystemChatSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;

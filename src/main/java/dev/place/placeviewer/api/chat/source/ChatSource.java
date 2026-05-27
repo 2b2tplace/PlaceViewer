@@ -1,4 +1,4 @@
-package dev.place.placeviewer.systems.chat.source;
+package dev.place.placeviewer.api.chat.source;
 
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;

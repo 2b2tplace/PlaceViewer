@@ -1,12 +1,11 @@
 package dev.place.placeviewer.systems.event.listener;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
-import dev.place.placeviewer.systems.chat.ServerChat;
-import dev.place.placeviewer.systems.chat.message.PublicChatMessage;
+import dev.place.placeviewer.api.chat.ServerChat;
+import dev.place.placeviewer.api.chat.message.PublicChatMessage;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
-import dev.place.placeviewer.systems.entrypoint.PlaceViewerConfig;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
-import dev.place.placeviewer.systems.event.chat.PlayerPublicMessageEvent;
+import dev.place.placeviewer.api.event.PlayerPublicMessageEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -53,12 +52,11 @@ public class PlayerTrafficListener implements Listener {
     }
 
     @EventHandler
-    public void chatEvent(@NotNull final AsyncChatEvent ev) {
-        final Player p = ev.getPlayer();
-        final PublicChatMessage message = PublicChatMessage.of(ev);
-        ev.setCancelled(true);
+    public void onChat(@NotNull final AsyncChatEvent event) {
+        final PublicChatMessage message = PublicChatMessage.of(event);
+        event.setCancelled(true);
 
-        final PlayerPublicMessageEvent broadcastEvent = new PlayerPublicMessageEvent(p, message);
+        final PlayerPublicMessageEvent broadcastEvent = new PlayerPublicMessageEvent(event.getPlayer(), message);
         Bukkit.getScheduler().runTask(PlaceViewer.PLUGIN, () -> ServerChat.submit(broadcastEvent));
     }
 

@@ -1,8 +1,7 @@
-package dev.place.placeviewer.systems.event.chat;
+package dev.place.placeviewer.api.event;
 
-import dev.place.placeviewer.systems.chat.message.PublicChatMessage;
+import dev.place.placeviewer.api.chat.message.PublicChatMessage;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -10,7 +9,9 @@ import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PlayerPublicMessageEvent extends PlayerEvent implements Cancellable, ServerChatEvent {
+import java.util.Optional;
+
+public class PlayerPublicMessageEvent extends PlayerEvent implements Cancellable, ServerChatEvent<PublicChatMessage> {
 
     @Nullable
     private PublicChatMessage message;
@@ -29,16 +30,21 @@ public class PlayerPublicMessageEvent extends PlayerEvent implements Cancellable
         this.cancelled = cancelled;
     }
 
-    @Nullable
-    public PublicChatMessage getMessage() {
-        return message;
+    @NotNull
+    public Optional<PublicChatMessage> message() {
+        return Optional.ofNullable(message);
     }
 
-    public void setMessage(@Nullable final PublicChatMessage message) {
+    @NotNull
+    public Optional<Component> component() {
+        return message().map(PublicChatMessage::component);
+    }
+
+    public void message(@Nullable final PublicChatMessage message) {
         this.message = message;
     }
 
-    public void setComponent(@Nullable final Component component) {
+    public void component(@Nullable final Component component) {
         if (component == null || message == null) {
             message = null;
             return;
