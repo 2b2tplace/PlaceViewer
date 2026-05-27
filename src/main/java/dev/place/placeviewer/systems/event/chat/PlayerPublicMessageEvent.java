@@ -1,6 +1,8 @@
 package dev.place.placeviewer.systems.event.chat;
 
 import dev.place.placeviewer.systems.chat.message.PublicChatMessage;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -34,6 +36,14 @@ public class PlayerPublicMessageEvent extends PlayerEvent implements Cancellable
 
     public void setMessage(@Nullable final PublicChatMessage message) {
         this.message = message;
+    }
+
+    public void setComponent(@Nullable final Component component) {
+        if (component == null || message == null) {
+            message = null;
+            return;
+        }
+        message = PublicChatMessage.of(component, message.source(), message.recipients());
     }
 
     @NotNull
