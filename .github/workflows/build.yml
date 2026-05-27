@@ -33,5 +33,7 @@ jobs:
                 with:
                     runtime_version: "${{ env.RUNTIME_VERSION }}"
                     gradle_warning_mode: "${{ env.GRADLE_WARNING_MODE }}"
+            -   name: "paperweight"
+                run: "./gradlew paperweightUserdevSetup"
             -   name: "run gradle build"
                 run: "./gradlew build"
