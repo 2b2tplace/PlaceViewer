@@ -15,7 +15,7 @@ permissions:
     contents: "read"
 
 env:
-    RUNTIME_VERSION: 17
+    RUNTIME_VERSION: 21
     GRADLE_WARNING_MODE: 'fail'
 
 jobs:
