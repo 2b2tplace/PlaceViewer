@@ -1,13 +1,32 @@
 paths:
-    zvcr-parent-directory: zvcr3 # parent directory to use for all zvcr3 files, structured the exact way PlaceProxy archive stores them
-    registry-directory: registries # parent directory for all registries, the same directory PlaceProxy archive uses
+    zvcr-parent-directory: 'zvcr3' # parent directory to use for all zvcr3 files, structured the exact way PlaceProxy archive stores them
+    registry-directory: 'registries' # parent directory for all registries, the same directory PlaceProxy archive uses
 ratelimiter:
     max-send-rate: 400 # maximum number of chunk packets a single player can receive per second
 region-cache:
     region-cache-timeout-millis: 20000 # number of milliseconds for a region to expire in the cache
     chunk-cache-timeout-millis: 100000 # number of milliseconds for a chunk packet to expire in the cache
 commands:
-    allowed-commands: [ help, fb, flashback, dim, dimension, tp, teleport, now, w, whisper, t, tell, msg, r, reply, l, last, lastmsg ]
+    allowed-commands:
+        - '?'
+        - 'help'
+        - 'fb'
+        - 'flashback'
+        - 'dim'
+        - 'dimension'
+        - 'tp'
+        - 'teleport'
+        - 'now'
+        - 'w'
+        - 'whisper'
+        - 't'
+        - 'tell'
+        - 'msg'
+        - 'r'
+        - 'reply'
+        - 'l'
+        - 'last'
+        - 'lastmsg'
 antispam:
     max-violations: 3
     per-ticks: 600 # allow one antispam violation every 30 seconds, anything more than that warns the player
