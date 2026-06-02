@@ -3,12 +3,12 @@ package dev.place.placeviewer.systems.event.listener;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import dev.place.placeviewer.api.chat.ServerChat;
 import dev.place.placeviewer.api.chat.message.PublicChatMessage;
+import dev.place.placeviewer.api.chat.message.SystemMessage;
+import dev.place.placeviewer.api.event.PlayerJoinQuitBroadcastEvent;
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
 import dev.place.placeviewer.api.event.PlayerPublicMessageEvent;
 import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -23,23 +23,21 @@ public class PlayerTrafficListener implements Listener {
     @EventHandler
     public void onJoin(@NotNull final PlayerJoinEvent event) {
         final Player player = event.getPlayer();
-        final String name = player.getName();
+        final SystemMessage joinMessage = new SystemMessage(event.joinMessage());
+        event.joinMessage(null);
 
-        if (!player.hasPlayedBefore()) {
-            event.joinMessage(Component.text(name + " joined the PlaceViewer server for the first time.", NamedTextColor.GRAY));
-            return;
-        }
-        event.joinMessage(Component.text(name + " joined the PlaceViewer server.", NamedTextColor.GRAY));
-        PlaceViewer.epochPool().sendActionBar(player);
+        final PlayerJoinQuitBroadcastEvent broadcastEvent = new PlayerJoinQuitBroadcastEvent(player, joinMessage, true);
+        ServerChat.submit(broadcastEvent);
     }
 
     @EventHandler
     public void onQuit(@NotNull final PlayerQuitEvent event) {
         final Player player = event.getPlayer();
-        final String name = player.getName();
+        final SystemMessage quitMessage = new SystemMessage(event.quitMessage());
+        event.quitMessage(null);
 
-        event.quitMessage(Component.text(name + " left the PlaceViewer server.", NamedTextColor.GRAY));
-        PlaceViewer.epochPool().remove(player);
+        final PlayerJoinQuitBroadcastEvent broadcastEvent = new PlayerJoinQuitBroadcastEvent(player, quitMessage, false);
+        ServerChat.submit(broadcastEvent);
     }
 
     @EventHandler
