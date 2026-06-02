@@ -1,6 +1,5 @@
 package dev.place.placeviewer.api.event;
 
-import dev.place.placeviewer.api.chat.message.PublicChatMessage;
 import dev.place.placeviewer.api.chat.message.SystemMessage;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
