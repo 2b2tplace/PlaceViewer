@@ -34,6 +34,11 @@ public class PlayerJoinQuitBroadcastEvent extends PlayerEvent implements Cancell
     }
 
     @NotNull
+    public Player source() {
+        return player;
+    }
+
+    @NotNull
     public Optional<SystemMessage> message() {
         return Optional.ofNullable(message);
     }
@@ -48,11 +53,11 @@ public class PlayerJoinQuitBroadcastEvent extends PlayerEvent implements Cancell
     }
 
     public void component(@Nullable final Component component) {
-        if (component == null) {
+        if (component == null || message == null) {
             message = null;
             return;
         }
-        message = SystemMessage.system(component);
+        message = SystemMessage.system(component, message.recipients());
     }
 
     public boolean joinEvent() {

@@ -30,8 +30,13 @@ public class PlayerWhisperEvent extends PlayerEvent implements Cancellable, Serv
     }
 
     @NotNull
+    public Player source() {
+        return player;
+    }
+
+    @NotNull
     public Player sender() {
-        return getPlayer();
+        return player;
     }
 
     @NotNull

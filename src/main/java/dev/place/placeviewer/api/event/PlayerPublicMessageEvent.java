@@ -31,6 +31,11 @@ public class PlayerPublicMessageEvent extends PlayerEvent implements Cancellable
     }
 
     @NotNull
+    public Player source() {
+        return player;
+    }
+
+    @NotNull
     public Optional<PublicChatMessage> message() {
         return Optional.ofNullable(message);
     }

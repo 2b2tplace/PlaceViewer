@@ -1,6 +1,7 @@
 package dev.place.placeviewer.api.event;
 
 import dev.place.placeviewer.api.chat.message.ChatMessage;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,5 +11,8 @@ public interface ServerChatEvent<T extends ChatMessage> extends Cancellable {
 
     @NotNull
     Optional<T> message();
+
+    @NotNull
+    Player source();
 
 }
