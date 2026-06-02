@@ -112,7 +112,8 @@ JNIEXPORT jbyteArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
     return jPacketByteBuf;
 }
 
-JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_indexRegionEpochs(JNIEnv *jEnv, jclass, const jlong jRegionObjectID) {
+JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_indexRegionEpochs(JNIEnv *jEnv, jclass,
+    const jlong jRegionObjectID, const jint relChunkX, const jint relChunkZ) {
     const auto regionObjectID = static_cast<uint64_t>(jRegionObjectID);
     if (!regionObjectID) return nullptr;
 
@@ -122,13 +123,13 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
     if (!regionPtr) return nullptr;
 
     std::unordered_set<time_t> epochSet;
-    epochSet.reserve(zvcr::SEGMENTS_PER_REGION * zvcr::MAX_SECTION_COUNT);
-    for (const auto &segment : regionPtr->segments) {
-        if (!segment) continue;
-        for (const auto &section : segment->blockSections.sections) {
-            for (const auto &[_, timestamp] : section.reverseDeltas) {
-                epochSet.emplace(timestamp * 1000L); // seconds -> millis
-            }
+    epochSet.reserve(zvcr::MAX_SECTION_COUNT);
+    const auto &segment = regionPtr->get(static_cast<uint8_t>(relChunkX), static_cast<uint8_t>(relChunkZ));
+    if (!segment) return nullptr;
+
+    for (const auto &section : segment->blockSections.sections) {
+        for (const auto &[_, timestamp] : section.reverseDeltas) {
+            epochSet.emplace(timestamp * 1000L); // seconds -> millis
         }
     }
     const auto epochs = std::vector<time_t>{epochSet.begin(), epochSet.end()};

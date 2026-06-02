@@ -14,7 +14,7 @@ public final class NativeRegion {
 
     public static native byte[] createEmptyChunkData(final int dimensionType);
 
-    public static native long[] indexRegionEpochs(final long regionPtr);
+    public static native long[] indexRegionEpochs(final long regionPtr, final int relChunkX, final int relChunkZ);
 
     public static native void mallocTrim();
 

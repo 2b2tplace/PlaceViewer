@@ -1,12 +1,17 @@
 package dev.place.placeviewer.systems.flashback;
 
 import ca.spottedleaf.moonrise.common.util.CoordinateUtils;
+import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.region.pos.Position;
 import it.unimi.dsi.fastutil.longs.LongHeapPriorityQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -78,8 +83,24 @@ public class EpochPool {
         }
     }
 
+    @NotNull
+    public Optional<Component> createActionBar(@NotNull final Player player) {
+        final Epoch epoch = currentEpoch(player);
+        return switch (epoch) {
+            case Epoch.Now ignored -> Optional.empty();
+            case Epoch.Snapshot snapshot -> {
+                final Location location = player.getLocation();
+                final Position chunkPos = Position.chunkPosition(location);
+
+                final long timestamp = PlaceViewer.regionPool().selectedChunkEpoch(chunkPos, snapshot.timestamp());
+                final String formattedTime = EpochIndex.FORMAT.format(Date.from(Instant.ofEpochMilli(timestamp)));
+                yield Optional.of(Component.text("Viewing snapshot from " + formattedTime, NamedTextColor.GRAY));
+            }
+        };
+    }
+
     public void sendActionBar(@NotNull final Player player) {
-        currentEpoch(player).actionBar().ifPresent(player::sendActionBar);
+        createActionBar(player).ifPresent(player::sendActionBar);
     }
 
     public void remove(@NotNull final Player player) {

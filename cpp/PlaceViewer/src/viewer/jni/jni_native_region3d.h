@@ -50,10 +50,10 @@ JNIEXPORT jbyteArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
 /*
  * Class:     dev_place_placeviewer_systems_region_jni_NativeRegion
  * Method:    indexRegionEpochs
- * Signature: (J)[J
+ * Signature: (JII)[J
  */
 JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_indexRegionEpochs
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jint, jint);
 
 /*
  * Class:     dev_place_placeviewer_systems_region_jni_NativeRegion

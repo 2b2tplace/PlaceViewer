@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -42,18 +43,35 @@ public class EpochIndex {
         return FORMAT.format(date);
     }
 
-    public void dates(final long @NotNull [] timestamps) {
-        dates(Arrays.stream(timestamps)
+    public static List<Date> dates(final long @NotNull [] timestamps) {
+        return Arrays.stream(timestamps)
             .mapToObj(timestamp -> Date.from(Instant.ofEpochMilli(timestamp)))
-            .toList());
+            .toList();
     }
 
     public void dates(@NotNull final List<Date> dates) {
         this.dates = new ArrayList<>(dates);
-        indexDates();
     }
 
-    private void indexDates() {
+    public long closestTimestamp(final long compareToTimestampMillis) {
+        final Instant target = Instant.ofEpochMilli(compareToTimestampMillis);
+
+        Instant closest = null;
+        Duration minDuration = null;
+
+        for (final Date date : dates) {
+            final Instant candidate = date.toInstant();
+            final Duration duration = Duration.between(target, candidate).abs();
+
+            if (minDuration == null || duration.compareTo(minDuration) < 0) {
+                minDuration = duration;
+                closest = candidate;
+            }
+        }
+        return closest != null ? closest.toEpochMilli() : compareToTimestampMillis;
+    }
+
+    public void indexDates() {
         dates.sort(Comparator.reverseOrder());
         index.clear();
         condensedDates.clear();

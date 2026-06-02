@@ -17,9 +17,6 @@ public sealed interface Epoch {
     long timestamp();
 
     @NotNull
-    Optional<Component> actionBar();
-
-    @NotNull
     static Now now() {
         return NOW;
     }
@@ -35,11 +32,6 @@ public sealed interface Epoch {
             return System.currentTimeMillis();
         }
 
-        @NotNull
-        public Optional<Component> actionBar() {
-            return Optional.empty();
-        }
-
         public int hashCode() {
             return 0;
         }
@@ -50,38 +42,12 @@ public sealed interface Epoch {
         }
     }
 
-    final class Snapshot implements Epoch {
-
-        private final long timestamp;
-        private final String formattedTime;
-
-        public Snapshot(final long timestamp) {
-            this.timestamp = timestamp;
-            this.formattedTime = EpochIndex.FORMAT.format(Date.from(Instant.ofEpochMilli(timestamp)));
-        }
-
-        @NotNull
-        public Optional<Component> actionBar() {
-            return Optional.of(Component.text("Viewing snapshot from " + formattedTime, NamedTextColor.GRAY));
-        }
-
-        @NotNull
-        public String formattedTime() {
-            return formattedTime;
-        }
-
-        public long timestamp() {
-            return timestamp;
-        }
-
-        public int hashCode() {
-            return Objects.hashCode(timestamp);
-        }
+    record Snapshot(long timestamp) implements Epoch {
 
         @NotNull
         public String toString() {
-            return "snapshot (" + timestamp() + ")";
-        }
+                return "snapshot (" + timestamp() + ")";
+            }
 
     }
 

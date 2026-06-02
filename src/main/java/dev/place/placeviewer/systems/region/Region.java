@@ -3,12 +3,14 @@ package dev.place.placeviewer.systems.region;
 import dev.place.placeviewer.systems.flashback.EpochIndex;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
+import dev.place.placeviewer.systems.region.pos.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Region implements AutoCloseable {
@@ -20,7 +22,7 @@ public final class Region implements AutoCloseable {
     private long @Nullable [] indexedTimestamps;
 
     @NotNull
-    private final EpochIndex epochIndex = new EpochIndex();
+    private final Map<Integer, EpochIndex> chunkEpochIndices = new ConcurrentHashMap<>();
 
     @NotNull
     private final String parentDirectory;
@@ -37,21 +39,41 @@ public final class Region implements AutoCloseable {
         this.regionX = regionX;
         this.regionZ = regionZ;
         this.dimensionType = dimensionType;
+
+        for (int i = 0; i < 1024; i++)
+            chunkEpochIndices.putIfAbsent(i, new EpochIndex());
     }
 
     private Region(@NotNull final String parentDirectory, final int regionX, final int regionZ,
                    @NotNull final DimensionType dimensionType) {
         this(NativeRegion.newRegionFromDisk(parentDirectory, regionX, regionZ, dimensionType.id()),
             parentDirectory, regionX, regionZ, dimensionType);
-        indexedTimestamps = NativeRegion.indexRegionEpochs(regionObjectID);
 
-        if (indexedTimestamps != null)
-            epochIndex.dates(indexedTimestamps);
+        for (int x = 0; x < 32; x++) {
+            for (int z = 0; z < 32; z++) {
+                final int key = 32 * x + z;
+                indexedTimestamps = NativeRegion.indexRegionEpochs(regionObjectID, x, z);
+                final EpochIndex chunkEpochIndex = chunkEpochIndices.get(key);
+
+                if (indexedTimestamps != null) {
+                    final List<Date> dates = EpochIndex.dates(indexedTimestamps);
+                    chunkEpochIndex.dates(dates);
+                    chunkEpochIndex.indexDates();
+                }
+            }
+        }
     }
 
     @NotNull
-    public EpochIndex epochIndex() {
-        return epochIndex;
+    public EpochIndex epochIndex(@NotNull final Position absChunkPos) {
+        return epochIndex(absChunkPos.x(), absChunkPos.z());
+    }
+
+    @NotNull
+    public EpochIndex epochIndex(final int absChunkX, final int absChunkZ) {
+        final int x = absChunkX & 31;
+        final int z = absChunkZ & 31;
+        return chunkEpochIndices.get(32 * x + z);
     }
 
     @NotNull
