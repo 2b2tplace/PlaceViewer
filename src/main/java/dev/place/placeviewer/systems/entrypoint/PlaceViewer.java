@@ -1,5 +1,6 @@
 package dev.place.placeviewer.systems.entrypoint;
 
+import dev.place.placeviewer.systems.command.IgnoreCommand;
 import dev.place.placeviewer.systems.flashback.EpochPool;
 import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
@@ -59,8 +60,14 @@ public final class PlaceViewer {
             Duration.ofMillis(PlaceViewer.config().chunkCacheTimeout())
         );
         PlaceViewerManager.registerAll();
+        IgnoreCommand.loadUserSettings();
+
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(EPOCH_POOL::sendActionBar), 40L, 40L);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, NativeRegion::mallocTrim, 2400L, 2400L);
+    }
+
+    public static void shutdown() {
+        IgnoreCommand.saveUserSettings();
     }
 
     @NotNull

@@ -27,6 +27,8 @@ commands:
         - 'l'
         - 'last'
         - 'lastmsg'
+        - 'ignore'
+        - 'i'
 antispam:
     max-violations: 3
     per-ticks: 600 # allow one antispam violation every 30 seconds, anything more than that warns the player
