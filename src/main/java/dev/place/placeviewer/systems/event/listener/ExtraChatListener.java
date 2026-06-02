@@ -1,4 +1,4 @@
-package dev.place.placeviewer.systems.event.feature;
+package dev.place.placeviewer.systems.event.listener;
 
 import dev.place.placeviewer.api.chat.message.ChatMessage;
 import dev.place.placeviewer.api.event.PlayerJoinQuitBroadcastEvent;
@@ -12,7 +12,7 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 
 @PlaceViewerListener
-public class ExtraChatFeature implements Listener {
+public class ExtraChatListener implements Listener {
 
     @EventHandler
     public void onGreentextChat(@NotNull final PlayerPublicMessageEvent event) {

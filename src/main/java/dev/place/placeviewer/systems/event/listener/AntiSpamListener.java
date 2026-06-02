@@ -1,4 +1,4 @@
-package dev.place.placeviewer.systems.event.feature;
+package dev.place.placeviewer.systems.event.listener;
 
 import dev.place.placeviewer.api.chat.ServerChat;
 import dev.place.placeviewer.api.chat.message.ChatMessage;
@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 import static java.lang.Math.*;
 
 @PlaceViewerListener
-public class AntiSpamFeature implements Listener {
+public class AntiSpamListener implements Listener {
 
     @NotNull
     private final Ratelimiter<UUID> ratelimiter;
@@ -36,7 +36,7 @@ public class AntiSpamFeature implements Listener {
     @NotNull
     private final PlaceViewerConfig.AntiSpamConfig config;
 
-    public AntiSpamFeature() {
+    public AntiSpamListener() {
         config = PlaceViewer.config().antiSpamConfig();
         ratelimiter = new Ratelimiter<>(config.maxViolations(), config.perTicks());
     }
