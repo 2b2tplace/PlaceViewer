@@ -1,4 +1,4 @@
-package dev.place.placeviewer.systems.event.listener;
+package dev.place.placeviewer.systems.listeners;
 
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
 import org.bukkit.entity.EntityType;
