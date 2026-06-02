@@ -10,6 +10,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.entity.Player;
@@ -30,6 +31,7 @@ public class FlashbackCommand extends BukkitCommand {
 
     @NotNull
     private static final String FLASHBACK_COMMAND = "flashback",
+        FLASHBACK_COMMAND_PREFIXED = PlaceViewer.prependCommandPrefix(FLASHBACK_COMMAND),
         FLASHBACK_ARGUMENT_SELECT = "select",
         FLASHBACK_ARGUMENT_BROWSE = "browse";
 
@@ -47,9 +49,11 @@ public class FlashbackCommand extends BukkitCommand {
             sender.sendMessage("This command can only be used in-game.");
             return true;
         }
-        final Position regionPos = Position.regionPosition(player.getLocation());
+        final Location location = player.getLocation();
+        final Position regionPos = Position.regionPosition(location);
+        final Position chunkPos = Position.chunkPosition(location);
         PlaceViewer.regionPool().regionAt(regionPos).thenAccept(region -> {
-            final EpochIndex epochIndex = region.epochIndex();
+            final EpochIndex epochIndex = region.epochIndex(chunkPos);
             region.release();
 
             if (epochIndex.condensedDates().isEmpty()) {
@@ -79,7 +83,7 @@ public class FlashbackCommand extends BukkitCommand {
             mainComponent = mainComponent.hoverEvent(HoverEvent.showText(Component.text(hoverText, NamedTextColor.GOLD)));
 
         if (clickCommandArgs != null) {
-            final String command = clickCommandArgs.isBlank() ? "/" + FLASHBACK_COMMAND : "/" + FLASHBACK_COMMAND + " " + clickCommandArgs;
+            final String command = clickCommandArgs.isBlank() ? "/" + FLASHBACK_COMMAND_PREFIXED : "/" + FLASHBACK_COMMAND_PREFIXED + " " + clickCommandArgs;
             mainComponent = mainComponent.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, command));
         }
         return mainComponent;
