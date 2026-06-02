@@ -5,12 +5,15 @@ import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
 import org.bukkit.Bukkit;
+import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public final class PlaceViewer {
@@ -29,6 +32,12 @@ public final class PlaceViewer {
 
     @NotNull
     public static final Logger LOGGER = LoggerFactory.getLogger(PlaceViewer.class.getSimpleName());
+
+    @NotNull
+    private static final List<BukkitCommand> REGISTERED_COMMANDS = new ArrayList<>();
+
+    @NotNull
+    public static final String COMMAND_FALLBACK_PREFIX = "placeviewer";
 
     private PlaceViewer() {}
 
@@ -67,6 +76,27 @@ public final class PlaceViewer {
     @NotNull
     public static PlaceViewerConfig config() {
         return Objects.requireNonNull(CONFIG);
+    }
+
+    public static void register(@NotNull final BukkitCommand command) {
+        REGISTERED_COMMANDS.add(command);
+    }
+
+    @NotNull
+    public static String stripCommandPrefix(@NotNull final String commandName) {
+        return commandName.startsWith(COMMAND_FALLBACK_PREFIX + ":")
+            ? commandName.substring(COMMAND_FALLBACK_PREFIX.length() + 1)
+            : commandName;
+    }
+
+    @NotNull
+    public static String prependCommandPrefix(@NotNull final String commandName) {
+        return COMMAND_FALLBACK_PREFIX + ":" + commandName;
+    }
+
+    public static boolean isRegisteredCommand(@NotNull final String commandName) {
+        return REGISTERED_COMMANDS.stream()
+            .anyMatch(command -> command.getName().equals(commandName));
     }
 
 }

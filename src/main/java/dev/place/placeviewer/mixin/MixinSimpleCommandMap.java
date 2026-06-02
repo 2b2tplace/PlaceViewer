@@ -10,7 +10,6 @@ import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -24,14 +23,11 @@ public abstract class MixinSimpleCommandMap {
     @Shadow
     public abstract boolean register(final String fallbackPrefix, final Command command);
 
-    @Unique
-    private static final String placeViewer$FallbackPrefix = "placeviewer";
-
     @Nullable
     @ModifyArg(method = "register(Ljava/lang/String;Ljava/lang/String;Lorg/bukkit/command/Command;)Z",
         at = @At(value = "INVOKE", target = "Lco/aikar/timings/TimingsManager;getCommandTiming(Ljava/lang/String;Lorg/bukkit/command/Command;)Lco/aikar/timings/Timing;"))
     private String registerTimingRemovePlugin(@Nullable final String pluginName) {
-        if (Objects.equals(pluginName, placeViewer$FallbackPrefix)) return null;
+        if (Objects.equals(pluginName, PlaceViewer.COMMAND_FALLBACK_PREFIX)) return null;
         return pluginName;
     }
 
@@ -52,8 +48,9 @@ public abstract class MixinSimpleCommandMap {
             })
             .map(o -> (BukkitCommand) o)
             .forEach(command -> {
-                register(placeViewer$FallbackPrefix, command);
+                register(PlaceViewer.COMMAND_FALLBACK_PREFIX, command);
                 HelpCommand.registerHelpPage(command);
+                PlaceViewer.register(command);
             });
     }
 

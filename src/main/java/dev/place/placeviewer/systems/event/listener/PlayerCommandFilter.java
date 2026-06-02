@@ -11,14 +11,22 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 @PlaceViewerListener
 public class PlayerCommandFilter implements Listener {
+
+    public static boolean isCommandDisabled(@NotNull final String commandName) {
+        final List<String> allowedCommands = PlaceViewer.config().allowedCommands();
+        final String stripped = PlaceViewer.stripCommandPrefix(commandName);
+        return !allowedCommands.contains(commandName) && !allowedCommands.contains(stripped);
+    }
 
     @EventHandler
     private void onCommandSend(@NotNull final PlayerCommandSendEvent event) {
         if (event.getPlayer().isOp()) return;
 
-        event.getCommands().removeIf(s -> !PlaceViewer.config().allowedCommands().contains(s));
+        event.getCommands().removeIf(PlayerCommandFilter::isCommandDisabled);
     }
 
     @EventHandler
@@ -30,7 +38,7 @@ public class PlayerCommandFilter implements Listener {
         if (args.length == 0) return;
 
         final String command = args[0].startsWith("/") ? args[0].substring(1) : args[0];
-        if (!PlaceViewer.config().allowedCommands().contains(command)) {
+        if (isCommandDisabled(command)) {
             player.sendMessage(Component.text("Unknown Command '" + command + "'. Use /help for all commands.", NamedTextColor.GRAY));
             event.setCancelled(true);
         }
