@@ -90,7 +90,8 @@ public class RegionPool {
 
     }
 
-    private FuturePool<Position, Region> regionCache = null;
+    @NotNull
+    private final FuturePool<Position, Region> regionCache;
 
     @NotNull
     private final FuturePool<PositionEpoch, byte[]> chunkPacketCache;
@@ -146,11 +147,14 @@ public class RegionPool {
     }
 
     public long selectedChunkEpoch(@NotNull final Position chunkPos, final long timestamp) {
-        final CompletableFuture<Region> optionalRegion = regionCache.cache.getIfPresent(Position.regionPosition(chunkPos));
-        if (optionalRegion == null || !optionalRegion.isDone()) return timestamp;
+        final CompletableFuture<Region> future = regionCache.cache.getIfPresent(Position.regionPosition(chunkPos));
+        if (future == null || !future.isDone()) return timestamp;
 
         try {
-            return optionalRegion.get().epochIndex(chunkPos).closestTimestamp(timestamp);
+            final Region region = future.get();
+            if (region == null) return timestamp;
+
+            return region.epochIndex(chunkPos).closestTimestamp(timestamp);
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
