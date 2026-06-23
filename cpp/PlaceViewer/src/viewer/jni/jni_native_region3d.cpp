@@ -1,9 +1,9 @@
 #include <viewer/jni/jni_native_region3d.h>
 #include <viewer/placeviewer.hpp>
 #include <viewer/chunk_packet_builder.hpp>
-#include <zvcr/region/dimension.hpp>
-#include <zvcr/region/file_location.hpp>
-#include <zvcr/serialize/serialization.hpp>
+#include <zvcr/dimension.hpp>
+#include <zvcr/io/file_location.hpp>
+#include <zvcr/io/serialize/deserialize.hpp>
 #include <filesystem>
 #include <malloc.h>
 
@@ -31,7 +31,7 @@ JNIEXPORT void JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegio
     jEnv->Throw(reinterpret_cast<jthrowable>(jException));
 }
 
-JNIEXPORT jlong JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_newRegionFromDisk(JNIEnv *jEnv, jclass, jstring jParentDirectory, const jint rx, const jint rz, const jint jDimensionType) {
+JNIEXPORT jlong JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_newRegionFromDisk(JNIEnv *jEnv, jclass, const jstring jParentDirectory, const jint rx, const jint rz, const jint jDimensionType) {
     namespace fs = std::filesystem;
 
     const char* parentDirectoryCString = jEnv->GetStringUTFChars(jParentDirectory, nullptr);
@@ -43,7 +43,7 @@ JNIEXPORT jlong JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegi
     const auto dimensionType = static_cast<zvcr::DimensionType>(jDimensionType);
     const auto location = zvcr::RegionLocation{rx, rz, dimensionType};
 
-    const auto regionFile = zvcr::readZVCRFileAt<zvcr::ZVCR3File>(parentDirectory, location);
+    const auto regionFile = zvcr::readFileAt(parentDirectory, location);
     if (!regionFile) {
         const auto &errorMessage = regionFile.error().what();
         const auto errorCode = static_cast<int>(regionFile.error().type);
@@ -61,7 +61,7 @@ JNIEXPORT jlong JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegi
         return 0L;
     }
     // copy constructor pretty trivial; array of 32 x 32 pointers.
-    const auto sharedRegion = std::make_shared<zvcr::Region3d>(regionFile->region);
+    const auto sharedRegion = std::make_shared<zvcr::Region>(regionFile->region);
     const auto regionObjectID = placeviewer::REGION_BUFFERS.write([&](placeviewer::RegionBuffers &regionBuffers) {
         const auto id = ++regionBuffers.regionObjectID;
         regionBuffers.regions[id] = sharedRegion;
@@ -131,6 +131,9 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
         for (const auto &[_, timestamp] : section.reverseDeltas) {
             epochSet.emplace(timestamp * 1000L); // seconds -> millis
         }
+    }
+    for (const auto &[timestamp, _] : segment->tileEntities.reverseDeltas) {
+        epochSet.emplace(timestamp * 1000L); // seconds -> millis
     }
     const auto epochs = std::vector<time_t>{epochSet.begin(), epochSet.end()};
     const auto len = static_cast<jsize>(epochs.size());

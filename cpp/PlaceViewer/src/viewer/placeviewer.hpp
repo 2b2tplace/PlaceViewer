@@ -6,7 +6,7 @@
 #include <absl/container/flat_hash_map.h>
 #include <mc_cpp/registry/minecraft.hpp>
 #include <mc_cpp/common/mutex.hpp>
-#include <zvcr/region/dim3/segment3.hpp>
+#include <zvcr/region/segment.hpp>
 
 namespace placeviewer {
 
@@ -18,7 +18,7 @@ namespace placeviewer {
 
     struct RegionBuffers {
         uint64_t regionObjectID{};
-        absl::flat_hash_map<uint64_t, std::shared_ptr<zvcr::Region3d>> regions{};
+        absl::flat_hash_map<uint64_t, std::shared_ptr<zvcr::Region>> regions{};
     };
 
     inline mc::Mutex<RegionBuffers> REGION_BUFFERS;

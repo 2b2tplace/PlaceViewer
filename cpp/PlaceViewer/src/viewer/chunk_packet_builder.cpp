@@ -105,18 +105,18 @@ namespace placeviewer {
         pc::WriteData<pc::VarInt>(0, buffer);
         pc::WriteData<pc::VarInt>(0, buffer);
 
-        static const std::vector<uint8_t> FULL_BRIGHT_LIGHT_NIBBLES(zvcr::SECTION_3D_SIZE_BLOCKS / 2, 0xFF);
+        static const std::vector<uint8_t> FULL_BRIGHT_LIGHT_NIBBLES(zvcr::SECTION_SIZE_BLOCKS / 2, 0xFF);
         for (uint8_t i = 0; i < 2; ++i) {
             pc::WriteData<pc::VarInt>(static_cast<int32_t>(sectionCount), buffer);
             for (size_t sectionIdx = 0; sectionIdx < sectionCount; ++sectionIdx) {
-                pc::WriteData<pc::VarInt>(zvcr::SECTION_3D_SIZE_BLOCKS / 2, buffer);
+                pc::WriteData<pc::VarInt>(zvcr::SECTION_SIZE_BLOCKS / 2, buffer);
                 pc::WriteByteArray(FULL_BRIGHT_LIGHT_NIBBLES, buffer);
             }
         }
     }
 
     auto createEmptyChunkData(const zvcr::DimensionType dimensionType) -> mc::ByteBuf {
-        const auto sectionCount = getProperties(dimensionType).height / zvcr::SEGMENT_SIDELENGTH_BLOCKS;
+        const auto sectionCount = zvcr::dimensionSectionCount(dimensionType);
         mc::ByteBuf buffer;
 
         // heightmaps can be left empty
@@ -143,15 +143,15 @@ namespace placeviewer {
         return buffer;
     }
 
-    auto createChunkDataPacket(const zvcr::Region3d &region, const zvcr::DimensionType dimensionType,
+    auto createChunkDataPacket(const zvcr::Region &region, const zvcr::DimensionType dimensionType,
                                const int32_t absChunkX, const int32_t absChunkZ, const time_t timestamp) -> mc::ByteBuf {
         const auto relChunkX = regionalChunkCoordinate(absChunkX);
         const auto relChunkZ = regionalChunkCoordinate(absChunkZ);
         const auto &segment = region.get(relChunkX, relChunkZ);
         if (!segment) return {};
 
-        const auto minY = getProperties(dimensionType).minY;
-        const auto sectionCount = getProperties(dimensionType).height / zvcr::SEGMENT_SIDELENGTH_BLOCKS;
+        const auto minY = zvcr::dimensionProperties(dimensionType).minY;
+        const auto sectionCount = zvcr::dimensionSectionCount(dimensionType);
 
         mc::ByteBuf buffer;
         pc::WriteData<int32_t>(absChunkX, buffer);
@@ -171,7 +171,7 @@ namespace placeviewer {
 
             const auto &biomeSection = segment->biomeSections.sections[sectionIndex].snapshotFrom(timestamp).value_or(emptyBiomeSection);
 
-            pc::WriteData<int16_t>(zvcr::SECTION_3D_SIZE_BLOCKS, data);
+            pc::WriteData<int16_t>(zvcr::SECTION_SIZE_BLOCKS, data);
             const auto blockPalette = writePalettedContainer<mc::anvil::Blocks>(*blockSection, data);
             writePalettedContainer<mc::anvil::Biomes>(biomeSection, data);
         }

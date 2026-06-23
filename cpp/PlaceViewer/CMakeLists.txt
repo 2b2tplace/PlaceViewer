@@ -14,7 +14,7 @@ include_directories(${JNI_INCLUDE_DIRS})
 include(FetchContent)
 FetchContent_Declare(zvcr
         GIT_REPOSITORY git@github.com:2b2tplace/zvcr.git
-        GIT_TAG        0.3.7.0
+        GIT_TAG        1.0.0.0
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
 )
