@@ -1,7 +1,6 @@
 package dev.place.placeviewer.systems.entrypoint;
 
 import dev.place.placeviewer.systems.command.IgnoreCommand;
-import dev.place.placeviewer.systems.flashback.EpochPool;
 import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
@@ -12,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -22,11 +20,8 @@ public final class PlaceViewer {
     @Nullable
     private static PlaceViewerConfig CONFIG;
 
-    @Nullable
-    private static RegionPool REGION_POOL;
-
     @NotNull
-    private static final EpochPool EPOCH_POOL = new EpochPool();
+    private static final RegionPool REGION_POOL = new RegionPool();
 
     @NotNull
     public static final PlaceViewerDummyPlugin PLUGIN = new PlaceViewerDummyPlugin();
@@ -54,15 +49,10 @@ public final class PlaceViewer {
         } catch (final NativeRegionException e) {
             throw new IllegalStateException("Unable to load registries, shutting down server.");
         }
-
-        REGION_POOL = new RegionPool(
-            Duration.ofMillis(PlaceViewer.config().regionCacheTimeout()),
-            Duration.ofMillis(PlaceViewer.config().chunkCacheTimeout())
-        );
         PlaceViewerManager.registerAll();
         IgnoreCommand.loadUserSettings();
 
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(EPOCH_POOL::sendActionBar), 40L, 40L);
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(REGION_POOL::sendActionBar), 40L, 40L);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, NativeRegion::mallocTrim, 2400L, 2400L);
     }
 
@@ -73,11 +63,6 @@ public final class PlaceViewer {
     @NotNull
     public static RegionPool regionPool() {
         return Objects.requireNonNull(REGION_POOL);
-    }
-
-    @NotNull
-    public static EpochPool epochPool() {
-        return Objects.requireNonNull(EPOCH_POOL);
     }
 
     @NotNull

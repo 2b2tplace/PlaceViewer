@@ -1,6 +1,7 @@
 package dev.place.placeviewer.systems.region.pos;
 
 import dev.place.placeviewer.systems.region.DimensionType;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,10 @@ public record Position(int x, int z, @NotNull DimensionType dimensionType) {
             location.getBlockZ() >> 4,
             DimensionType.dimensionType(location.getWorld().getEnvironment())
         );
+    }
+
+    public long key() {
+        return Chunk.getChunkKey(x, z);
     }
 
     @NotNull

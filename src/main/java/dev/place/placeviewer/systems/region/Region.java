@@ -1,6 +1,6 @@
 package dev.place.placeviewer.systems.region;
 
-import dev.place.placeviewer.systems.flashback.EpochIndex;
+import dev.place.placeviewer.systems.region.epoch.EpochIndex;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
 import dev.place.placeviewer.systems.region.pos.Position;
@@ -9,14 +9,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Region implements AutoCloseable {
-
-    @NotNull
-    private final AtomicBoolean force = new AtomicBoolean(true);
 
     private long regionObjectID;
     private long @Nullable [] indexedTimestamps;
@@ -108,13 +107,7 @@ public final class Region implements AutoCloseable {
         return NativeRegion.createChunkDataPacket(regionObjectID, dimensionType.id(), absChunkX, absChunkZ, timestampMillis / 1000L);
     }
 
-    public void release() {
-        force.set(false);
-    }
-
     public void close() {
-        if (force.get()) return;
-
         NativeRegion.freeRegion(regionObjectID);
         regionObjectID = 0L;
     }

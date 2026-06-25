@@ -2,8 +2,8 @@ package dev.place.placeviewer.systems.command;
 
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
-import dev.place.placeviewer.systems.flashback.EpochPool;
-import dev.place.placeviewer.systems.flashback.Epoch;
+import dev.place.placeviewer.systems.region.RegionPool;
+import dev.place.placeviewer.systems.region.epoch.Epoch;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
@@ -33,9 +33,9 @@ public class NowCommand extends BukkitCommand {
             sender.sendMessage("This command can only be used in-game.");
             return true;
         }
-        final EpochPool epochPool = PlaceViewer.epochPool();
-        epochPool.currentEpoch(player.getUniqueId(), Epoch.now());
-        epochPool.reloadAllChunks(player);
+        final RegionPool regionPool = PlaceViewer.regionPool();
+        regionPool.currentEpoch(player.getUniqueId(), Epoch.now());
+        regionPool.reloadAllChunks(player);
         player.sendMessage(Component.text("Your view mode has been reset to the latest snapshot.", NamedTextColor.GOLD));
         return true;
     }

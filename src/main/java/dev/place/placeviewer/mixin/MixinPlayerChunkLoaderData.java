@@ -51,12 +51,13 @@ public abstract class MixinPlayerChunkLoaderData {
 
     @Inject(method = "updateQueues", at = @At("HEAD"), cancellable = true)
     private void pollSendQueue(final long time, final CallbackInfo ci) {
+        final RegionPool regionPool = PlaceViewer.regionPool();
         final double sendRate = PlaceViewer.config().maxSendRate();
         chunkSendLimiter.tickAllocation(time, sendRate, sendRate);
 
         final int maxSendsThisTick = Math.min((int) chunkSendLimiter.takeAllocation(time, sendRate, MAX_RATE), sendQueue.size());
-        PlaceViewer.epochPool().sentChunks(player.getUUID(), sentChunks);
-        PlaceViewer.epochPool().chunkSendQueue(player.getUUID(), sendQueue);
+        regionPool.sentChunks(player.getUUID(), sentChunks);
+        regionPool.chunkSendQueue(player.getUUID(), sendQueue);
 
         for (int i = 0; i < maxSendsThisTick; ++i) {
             final long pendingSend = sendQueue.firstLong();
@@ -65,8 +66,9 @@ public abstract class MixinPlayerChunkLoaderData {
 
             sendQueue.dequeueLong();
 
-            if (sentChunks.add(CoordinateUtils.getChunkKey(pendingSendX, pendingSendZ)))
-                RegionPool.sendChunk(player, pendingSendX, pendingSendZ);
+            if (sentChunks.add(CoordinateUtils.getChunkKey(pendingSendX, pendingSendZ))) {
+                regionPool.sendChunk(player, pendingSendX, pendingSendZ);
+            }
 
             if (removed) return;
         }
@@ -75,6 +77,7 @@ public abstract class MixinPlayerChunkLoaderData {
 
     @Inject(method = "sendUnloadChunkRaw", at = @At("HEAD"), cancellable = true)
     private void sendUnloadChunkRaw(final int chunkX, final int chunkZ, final CallbackInfo ci) {
+        PlaceViewer.regionPool().unloadChunk(player, chunkX, chunkZ);
         player.connection.send(new ClientboundForgetLevelChunkPacket(new ChunkPos(chunkX, chunkZ)));
         ci.cancel();
     }

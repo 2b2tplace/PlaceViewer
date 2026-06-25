@@ -2,8 +2,9 @@ package dev.place.placeviewer.systems.command;
 
 import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
-import dev.place.placeviewer.systems.flashback.EpochIndex;
-import dev.place.placeviewer.systems.flashback.EpochPool;
+import dev.place.placeviewer.systems.region.RegionPool;
+import dev.place.placeviewer.systems.region.epoch.EpochIndex;
+import dev.place.placeviewer.systems.region.Region;
 import dev.place.placeviewer.systems.region.pos.Position;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -23,6 +24,7 @@ import java.time.format.TextStyle;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 import static dev.place.placeviewer.systems.command.CommandUtil.*;
 
@@ -52,11 +54,16 @@ public class FlashbackCommand extends BukkitCommand {
         final Location location = player.getLocation();
         final Position regionPos = Position.regionPosition(location);
         final Position chunkPos = Position.chunkPosition(location);
-        PlaceViewer.regionPool().regionAt(regionPos).thenAccept(region -> {
-            final EpochIndex epochIndex = region.epochIndex(chunkPos);
-            region.release();
 
-            if (epochIndex.condensedDates().isEmpty()) {
+        final CompletableFuture<Region> future = PlaceViewer.regionPool().regionAt(regionPos);
+        if (future == null) {
+            sender.sendMessage(Component.text("Region is currently not loaded. Please report this issue to the developers of PlaceViewer.", NamedTextColor.RED));
+            return true;
+        }
+        future.thenAccept(region -> {
+            final EpochIndex epochIndex = region == null ? null : region.epochIndex(chunkPos);
+
+            if (epochIndex == null || epochIndex.condensedDates().isEmpty()) {
                 player.sendMessage(Component.text("No recorded data was found at your current position.", NamedTextColor.GRAY));
                 return;
             }
@@ -233,9 +240,9 @@ public class FlashbackCommand extends BukkitCommand {
             return;
         }
         final Date date = Date.from(Instant.ofEpochMilli(timestamp));
-        final EpochPool epochPool = PlaceViewer.epochPool();
-        epochPool.currentEpoch(player, date);
-        epochPool.reloadAllChunks(player);
+        final RegionPool regionPool = PlaceViewer.regionPool();
+        regionPool.currentEpoch(player, date);
+        regionPool.reloadAllChunks(player);
 
         player.sendMessage(Component.text("Using Flashback to see history from " + EpochIndex.format(date) + " (" + timestamp + "). " +
             "Use '/now' to reset to the latest view.", NamedTextColor.GOLD));
