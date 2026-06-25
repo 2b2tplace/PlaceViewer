@@ -1,6 +1,6 @@
 {
     "id": "placeviewer",
-    "version": "0.3.0.0",
+    "version": "0.5.0.0",
     "mixins": [
         "mixins.placeviewer.json"
     ],
