@@ -15,7 +15,6 @@ dependencies {
     compileOnly("org.jetbrains:annotations:26.1.0")
 
     implementation("org.reflections:reflections:0.10.2")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
     implementation("me.xuender:unidecode:0.0.7")
 
     annotationProcessor(libs.mixinExtras)
