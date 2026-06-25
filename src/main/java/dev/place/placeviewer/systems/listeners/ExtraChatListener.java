@@ -8,7 +8,6 @@ import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
 import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
