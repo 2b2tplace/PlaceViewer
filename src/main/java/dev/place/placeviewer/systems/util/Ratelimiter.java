@@ -1,8 +1,7 @@
 package dev.place.placeviewer.systems.util;
 
-import dev.place.placeviewer.systems.entrypoint.PlaceViewer;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,58 +9,71 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Ratelimiter<T> {
 
     private final Map<T, Integer> violatedCount = new ConcurrentHashMap<>();
-    private final Map<T, Integer> bukkitTasks = new ConcurrentHashMap<>();
+    public final Map<T, ExpiringFlag> expiringFlags = new ConcurrentHashMap<>();
 
-    private int MAX_AMOUNT;
-    private long PER_TICKS;
+    private int maxAmount;
+    private long perMillis;
 
-    public Ratelimiter() {
+    public Ratelimiter(final int maxAmount, final long perMillis) {
         super();
-    }
-
-    public Ratelimiter(final int maxAmount, final long perTicks) {
-        super();
-        this.MAX_AMOUNT = maxAmount;
-        this.PER_TICKS = perTicks;
+        this.maxAmount = maxAmount;
+        this.perMillis = perMillis;
     }
 
     public int maxAmount() {
-        return MAX_AMOUNT;
+        return maxAmount;
     }
 
-    public long perTicks() {
-        return PER_TICKS;
+    public long perMillis() {
+        return perMillis;
     }
 
     public void maxAmount(final int maxAmount) {
-        this.MAX_AMOUNT = maxAmount;
+        this.maxAmount = maxAmount;
     }
 
-    public void perTicks(final long perTicks) {
-        this.PER_TICKS = perTicks;
+    public void perMillis(final long perMillis) {
+        this.perMillis = perMillis;
     }
 
     public int violationCount(@NotNull final T obj) {
-        return violatedCount.getOrDefault(obj, -1);
+        return violatedCount.getOrDefault(obj, 0);
     }
 
-    public void resetViolationCount(@NotNull final T obj) {
+    public void reset(@NotNull final T obj) {
         violatedCount.remove(obj);
-        bukkitTasks.remove(obj);
+        expiringFlags.remove(obj);
     }
 
-    public boolean maybeViolated(@NotNull final T obj)  {
+    public boolean isViolation(@Nullable final Integer count, @Nullable final ExpiringFlag expiringFlag) {
+        if (count == null || expiringFlag == null) return false;
+
+        return !expiringFlag.expired() && count >= maxAmount;
+    }
+
+    public boolean peek(@NotNull final T obj) {
+        final Integer count = violatedCount.get(obj);
+        final ExpiringFlag expiringFlag = expiringFlags.get(obj);
+
+        return isViolation(count, expiringFlag);
+    }
+
+    public boolean expired(@NotNull final T obj) {
+        final ExpiringFlag expiringFlag = expiringFlags.get(obj);
+        return expiringFlag == null || expiringFlag.expired();
+    }
+
+    public boolean test(@NotNull final T obj)  {
         violatedCount.putIfAbsent(obj, 0);
         violatedCount.merge(obj, 1, Integer::sum);
+        expiringFlags.putIfAbsent(obj, new ExpiringFlag(perMillis));
 
-        if (!bukkitTasks.containsKey(obj) && PER_TICKS >= 0) {
-            bukkitTasks.put(obj, Bukkit.getScheduler()
-                    .runTaskLaterAsynchronously(PlaceViewer.PLUGIN, () -> resetViolationCount(obj), PER_TICKS)
-                    .getTaskId()
-            );
-        }
+        final ExpiringFlag expiringFlag = expiringFlags.get(obj);
+        final boolean countViolation = isViolation(violationCount(obj), expiringFlag);
 
-        return violationCount(obj) >= MAX_AMOUNT;
+        expiringFlag.reset();
+
+        return countViolation;
     }
 
 }
