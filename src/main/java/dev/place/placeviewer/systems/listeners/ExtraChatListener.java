@@ -1,11 +1,16 @@
 package dev.place.placeviewer.systems.listeners;
 
+import dev.place.placeviewer.api.chat.ServerChat;
 import dev.place.placeviewer.api.chat.message.ChatMessage;
 import dev.place.placeviewer.api.event.PlayerJoinQuitBroadcastEvent;
 import dev.place.placeviewer.api.event.PlayerPublicMessageEvent;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerListener;
+import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,6 +28,18 @@ public class ExtraChatListener implements Listener {
         });
     }
 
+    @NotNull
+    private static Location spawn() {
+        final World world = DimensionType.OVERWORLD.world().orElseThrow();
+        return new Location(world, 0, world.getMaxHeight(), 0);
+    }
+
+    private static void sendWelcomeSplashText(@NotNull final Player player) {
+        ServerChat.coloredMessage("Welcome to the 2b2t Wayback Machine!", NamedTextColor.GOLD, player);
+        ServerChat.coloredMessage("Use /help to see all available commands.", NamedTextColor.GRAY, player);
+        ServerChat.coloredMessage("You can use /fb to browse through historical snapshots of the map.", NamedTextColor.GRAY, player);
+    }
+
     @EventHandler
     public void onJoinQuit(@NotNull final PlayerJoinQuitBroadcastEvent event) {
         final Player player = event.getPlayer();
@@ -30,14 +47,16 @@ public class ExtraChatListener implements Listener {
 
         final boolean joinEvent = event.joinEvent();
         if (!joinEvent) {
-            event.component(Component.text(name + " left the PlaceViewer server.", NamedTextColor.GRAY));
+            event.component(Component.text(name + " left the server.", NamedTextColor.GRAY));
             return;
         }
         if (!player.hasPlayedBefore()) {
-            event.component(Component.text(name + " joined the PlaceViewer server for the first time.", NamedTextColor.GRAY));
+            event.component(Component.text(name + " joined the server for the first time.", NamedTextColor.GRAY));
+            player.teleport(spawn());
+            sendWelcomeSplashText(player);
             return;
         }
-        event.component(Component.text(name + " joined the PlaceViewer server.", NamedTextColor.GRAY));
+        event.component(Component.text(name + " joined the server.", NamedTextColor.GRAY));
     }
 
     @EventHandler
