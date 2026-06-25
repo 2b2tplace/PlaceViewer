@@ -1,6 +1,8 @@
-package dev.place.placeviewer.systems.flashback;
+package dev.place.placeviewer.systems.region.epoch;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public sealed interface Epoch {
 
@@ -36,6 +38,10 @@ public sealed interface Epoch {
     }
 
     record Snapshot(long timestamp) implements Epoch {
+
+        public int hashCode() {
+            return Objects.hashCode(timestamp);
+        }
 
         @NotNull
         public String toString() {
