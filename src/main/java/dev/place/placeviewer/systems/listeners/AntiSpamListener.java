@@ -11,12 +11,15 @@ import dev.place.placeviewer.systems.util.LimitedSizeQueue;
 import dev.place.placeviewer.systems.util.Ratelimiter;
 import me.xuender.unidecode.Unidecode;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextReplacementConfig;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -31,18 +34,16 @@ import static java.lang.Math.*;
 public class AntiSpamListener implements Listener {
 
     @NotNull
-    private final Ratelimiter<UUID> ratelimiter;
+    private final Ratelimiter<UUID> baselineViolations, strictViolations;
 
     @NotNull
     private final PlaceViewerConfig.AntiSpamConfig config;
 
     public AntiSpamListener() {
         config = PlaceViewer.config().antiSpamConfig();
-        ratelimiter = new Ratelimiter<>(config.maxViolations(), config.perTicks());
+        baselineViolations = new Ratelimiter<>(config.maxBaselineViolations(), config.baselineRatelimitMillis());
+        strictViolations = new Ratelimiter<>(config.maxStrictViolations(), config.strictRatelimitMillis());
     }
-
-    @NotNull
-    private static final Map<UUID, AntispamViolation> spamStreak = new ConcurrentHashMap<>();
 
     @EventHandler
     public void onChat(@NotNull final PlayerPublicMessageEvent event) {
@@ -56,6 +57,12 @@ public class AntiSpamListener implements Listener {
         if (!config.filterWhisperMessages()) return;
 
         event.toMessage().ifPresent(message -> checkAntispam(event.getPlayer(), message, event));
+    }
+
+    @EventHandler
+    public void onQuit(@NotNull final PlayerQuitEvent event) {
+        final UUID uuid = event.getPlayer().getUniqueId();
+        baselineViolations.reset(uuid);
     }
 
     private class MessageFootprint {
@@ -105,59 +112,62 @@ public class AntiSpamListener implements Listener {
 
     }
 
-    private class AntispamViolation {
-        private int currentTaskID;
-        private int violationCount;
+    private void resetViolations(@NotNull final UUID uuid) {
+        if (!baselineViolations.expired(uuid) && !strictViolations.expired(uuid)) return;
 
-        @NotNull
-        private final UUID uuid;
+        if (!strictViolations.peek(uuid))
+            strictViolations.reset(uuid);
 
-        public AntispamViolation(@NotNull final UUID uuid) {
-            violationCount = 1;
-            currentTaskID = -1;
-            this.uuid = uuid;
-        }
-
-        public void violated() {
-            violationCount++;
-            if (currentTaskID != -1) Bukkit.getScheduler().cancelTask(currentTaskID);
-
-            final Player p = Bukkit.getPlayer(uuid);
-            if (p != null && violationCount > config.violationsBeforeKick()) {
-                Bukkit.getScheduler().runTask(PlaceViewer.PLUGIN, () -> {
-                    final Component kickMessage = config.kickMessage();
-                    if (kickMessage == null) p.kick();
-                    else p.kick(kickMessage);
-                });
-                PlaceViewer.LOGGER.warn("Player {} ({}) was kicked due to spamming in chat.", p.getName(), p.getUniqueId());
-            }
-
-            currentTaskID = Bukkit.getScheduler().runTaskLater(PlaceViewer.PLUGIN, () -> {
-                violationCount = 0;
-                currentTaskID = -1;
-            }, config.perTicks()).getTaskId();
-        }
-
+        baselineViolations.reset(uuid);
     }
 
-    private void checkAntispam(@NotNull final Player p, @NotNull final ChatMessage message, @NotNull final Cancellable event) {
-        final UUID uuid = p.getUniqueId();
-        final double probability = spamProbability(p, message);
-        if (probability < 0.65) return;
+    private void checkAntispam(@NotNull final Player player, @NotNull final ChatMessage message, @NotNull final Cancellable event) {
+        final UUID uuid = player.getUniqueId();
+        if (strictViolations.peek(uuid)) {
+            discardChatMessage(player, message, event);
+        }
+        final double probability = spamProbability(player, message);
 
-        if (!ratelimiter.maybeViolated(p.getUniqueId()) && probability < 0.95) return;
+        final boolean countBaselineSpam = probability >= config.baselineMinSpamConfidence();
+        if (!countBaselineSpam) {
+            resetViolations(uuid);
+            return;
+        }
+        final boolean strict = baselineViolations.test(uuid);
+        final boolean fallback = baselineViolations.violationCount(uuid) >= config.maxFallbackViolations();
 
-        final Component warnMessage = config.warnMessage();
-        if (warnMessage != null)
-            ServerChat.privateMessage(warnMessage, p);
+        final boolean spamStrict = strict && probability >= config.strictMinSpamConfidence();
+        final boolean spamFallback = fallback && probability >= config.fallbackMinSpamConfidence();
+        if (!spamStrict && !spamFallback) return;
 
-        spamStreak.putIfAbsent(uuid, new AntispamViolation(uuid));
-        spamStreak.get(uuid).violated();
+        if (!event.isCancelled())
+            discardChatMessage(player, message, event);
+
+        if (strictViolations.test(uuid) && config.strictKick()) {
+            Bukkit.getScheduler().runTask(PlaceViewer.PLUGIN, () -> player.kick(config.kickMessage()));
+            PlaceViewer.LOGGER.warn("Player {} ({}) was kicked due to spamming in chat.", player.getName(), uuid);
+        }
+    }
+
+    private void discardChatMessage(@NotNull final Player player, @NotNull final ChatMessage message, @NotNull final Cancellable event) {
         event.setCancelled(true);
 
-        if (!config.silentDiscard()) return;
-        ServerChat.privateMessage(message, p);
-        message.recipients().removeIf(u -> !u.equals(uuid));
+        final Component configWarnMessage = config.warnMessage();
+        final Component configWarnHoverMessage = config.warnHoverMessage();
+
+        if (configWarnMessage != null) {
+            Component warnMessage = configWarnMessage.replaceText(TextReplacementConfig.builder()
+                .match("%s")
+                .replacement(message.message())
+                .match("%f")
+                .replacement(message.send(player))
+                .build());
+
+            if (configWarnHoverMessage != null)
+                warnMessage = warnMessage.hoverEvent(HoverEvent.showText(configWarnHoverMessage));
+
+            ServerChat.privateMessage(warnMessage, player);
+        }
     }
 
     @NotNull
@@ -177,13 +187,16 @@ public class AntiSpamListener implements Listener {
     private static final String PUNCTUATION_SPLIT_REGEX = "((?<=%s)|(?=%s))".formatted(PUNCTUATION.pattern(), PUNCTUATION.pattern());
 
     @NotNull
-    private static final String URL_REGEX = "\\b(http://www\\.|https://www\\.|http://|https://)?[a-z0-9]+([\\-.][a-z0-9]+)*\\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?\\b";
+    private static final String URL_REGEX = "\\b(|http://|https://)?[a-z0-9]+([\\-.][a-z0-9]+)*\\.[a-z]{2,5}(:[0-9]{1,5})?(/.*)?\\b";
 
     @NotNull
     private static final Function<String, String> removeStopwordsAndNumbers = s -> s.replaceAll(ENGLISH_STOPWORDS.pattern() + "|" + NUMBERS.pattern(), "");
 
     @NotNull
     private static final Map<UUID, LimitedSizeQueue<MessageFootprint>> footprints = new ConcurrentHashMap<>();
+
+    @NotNull
+    private static final Map<UUID, LimitedSizeQueue<Double>> spamProbabilities = new ConcurrentHashMap<>();
 
     public static double tau(final double x) {
         return exp(-abs(x) + 1);
@@ -260,12 +273,12 @@ public class AntiSpamListener implements Listener {
     private static List<Long> zeroDeviation(@NotNull final LimitedSizeQueue<MessageFootprint> queue) {
         final List<Long> timeDelays = new ArrayList<>();
         addDeviations(timeDelays, queue.queue().stream().map(MessageFootprint::timestamp).toList());
-        return zeroDifference(timeDelays, 50);
+        return zeroDifference(timeDelays, 100);
     }
 
     private static boolean hasZeroDeviation(@NotNull final LimitedSizeQueue<MessageFootprint> playerFootprints, final long timeSinceLast) {
         final List<Long> zeroDeviation = zeroDeviation(playerFootprints);
-        return zeroDeviation.stream().anyMatch(z -> (abs(z - timeSinceLast) < 50));
+        return zeroDeviation.stream().anyMatch(z -> (abs(z - timeSinceLast) <= 100));
     }
 
     @NotNull
@@ -282,11 +295,11 @@ public class AntiSpamListener implements Listener {
             footprint.urls.isEmpty() ? 0 : playerFootprints.stream().mapToInt(f -> f.urls().size()).sum(),
             smallestLevenshtein);
 
-        return min(1.0d, hasZeroDeviation ? spamProbabilityDefault + 0.35 : spamProbabilityDefault);
+        return hasZeroDeviation ? spamProbabilityDefault + 0.35 : spamProbabilityDefault;
     }
 
-    private double spamProbability(@NotNull final Player p, @NotNull final ChatMessage message) {
-        final UUID uuid = p.getUniqueId();
+    private double spamProbability(@NotNull final Player player, @NotNull final ChatMessage message) {
+        final UUID uuid = player.getUniqueId();
         final MessageFootprint footprint = messageFootprint(message.message());
         footprints.putIfAbsent(uuid, new LimitedSizeQueue<>(32));
 
@@ -302,7 +315,18 @@ public class AntiSpamListener implements Listener {
 
         footprints.get(uuid).add(footprint);
 
-        return lastFootprint.map(f -> spamProbability(f, footprint, playerFootprints, timeSinceLast, smallestLevenshtein)).orElse(0.0d);
+        final double result = lastFootprint.map(f -> spamProbability(f, footprint, playerFootprints, timeSinceLast, smallestLevenshtein)).orElse(0.0d);
+        spamProbabilities.putIfAbsent(uuid, new LimitedSizeQueue<>(32));
+
+        int equalProbabilities = 0;
+        for (final double previousProbability : spamProbabilities.get(uuid)) {
+            if (Math.abs(result - previousProbability) < 1e-5)
+                equalProbabilities++;
+        }
+        spamProbabilities.get(uuid).add(result);
+
+        final double randomizedSpam = 4.0 * (double) equalProbabilities / spamProbabilities.get(uuid).size();
+        return Math.clamp(result + randomizedSpam, 0, 1);
     }
 
 }

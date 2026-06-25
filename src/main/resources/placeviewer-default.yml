@@ -3,9 +3,6 @@ paths:
     registry-directory: 'registries' # parent directory for all registries, the same directory PlaceProxy archive uses
 ratelimiter:
     max-send-rate: 400 # maximum number of chunk packets a single player can receive per second
-region-cache:
-    region-cache-timeout-millis: 20000 # number of milliseconds for a region to expire in the cache
-    chunk-cache-timeout-millis: 100000 # number of milliseconds for a chunk packet to expire in the cache
 commands:
     allowed-commands:
         - '?'
@@ -30,22 +27,64 @@ commands:
         - 'ignore'
         - 'i'
 antispam:
-    max-violations: 3
-    per-ticks: 600 # allow one antispam violation every 30 seconds, anything more than that warns the player
+    # the implementation of this antispam takes several features within and between messages into account:
+    # - the time between messages.
+    #   a consistent, robotic delay between messages increases the spam probability more, compared to human-like "random" delays.
+    #   similarly, shorter delays between messages also increase the spam probability.
+    # - the levenshtein-distance between sanitized messages.
+    #   a player sending exact copies, or extremely similar messages increases the spam probability.
+    #
+    #   for sanitization, several features are internally removed for more accurate message differences:
+    #   - common english stopwords and numbers are removed.
+    #   - non-ascii unicode are mapped to the closest match in the english alphabet.
+    #   - punctuation is removed, and words are sorted. the order of words is ignored.
+    #
+    #   messages are compared to all messages within a short message history of the player.
+    #   the lowest levenshtein-distance in these comparisons is taken when calculating the spam probability of a message.
+    # - the length of messages. longer messages are more likely to be spam.
+    # - links found in messages and the message history. more links sent by a player are more likely to be spam.
 
-    spam-tolerance-millis: 300 # pretty much the minimum delay between messages in milliseconds, except this is mathematically calculated, along with other values
-    length-tolerance-charcount: 96 # max amount of characters, except this is also mathematically calculated, so you wont necessarily be warned once you reach this limit
+    # the antispam operates in two modes: baseline, and strict.
 
-    violations-before-kick: 5 # max amount of antispam violations in the per-ticks amount of time before a player gets kicked for spamming
-    kick-message: ""
+    # during baseline mode, the antispam simply measures the spam probability of messages.
+    # whenever this spam probability exceeds `baseline-minimum-spam-confidence`, a baseline violation is counted.
+    # whenever a player exceeds a baseline violation count of `max-baseline-violations`, they enter strict mode.
+    baseline-minimum-spam-confidence: 0.54
+    max-baseline-violations: 2
 
-    likely-spam-confidence: 0.55 # if the antispam is atleast 55% confident the message was spam, count it as spam
-    definetly-spam-confidence: 0.95 # 95% confidence required for a violation to definetly count
-    warn-message: "" # warn message if antispam detects someone spamming, set to "" if you do not want to send any warning
+    # during strict mode, the antispam counts messages with a spam probability higher than `strict-minimum-spam-confidence` towards a strict violation count.
+    # messages with a spam probability exceeding `strict-minimum-spam-confidence` during this mode are also discarded from the chat, optionally with a warning message.
+    # whenever a player exceeds a strict violation count of `max-strict-violations`, they are kicked, or temporarily muted.
+    strict-minimum-spam-confidence: 0.75
+    max-strict-violations: 10
 
-    silent-discard: true # set to true if you want the message to be silently removed (it will look like the message was sent for the player, but noone else except console will see their spam)
+    # in certain cases, a spammer may never actually reach the `strict-minimum-spam-confidence`, but still heavily accumulate baseline violations.
+    # for this type of spam, the replacement value `fallback-minimum-spam-confidence` instead of `strict-minimum-spam-confidence` value is used.
+    # this replacement happens specifically as soon as the number of baseline violations exceeds `max-fallback-violations`.
+    fallback-minimum-spam-confidence: 0.45
+    max-fallback-violations: 5
 
-    filter-public-messages: true # when should the antispam check messages?
+    # violations for a player are reset to zero after `*-ratelimit-millis` milliseconds have passed without triggering the antispam.
+    baseline-ratelimit-millis: 30000
+    strict-ratelimit-millis: 600000
+
+    # messages sent with delays between each other shorter than `spam-tolerance-millis` are counted higher towards the spam probability.
+    spam-tolerance-millis: 300
+
+    # messages sent with lengths higher than `length-tolerance-charcount` are counted higher towards the spam probability.
+    length-tolerance-charcount: 96
+
+    # custom messages. use %f as a placeholder for the full formatted message (e.g. <playername> content), %s for only the content of the message.
+    kick-message: '' # keep empty if you do not want to set a custom kick message.
+    warn-message: '&c&n%f' # keep empty if you do not want to send any warnings.
+    warn-hover-message: '&cMessage was not delivered' # keep empty if you do not want to override the warn message hover event.
+
+    # set to true if you want the antispam to kick players after exceeding the maximum strict violations.
+    # when set to false, the player will be temporarily unable to send messages instead. this will reset after `strict-ratelimit-millis`.
+    strict-kick: false
+
+    # when should the antispam check messages?
+    filter-public-messages: true
     filter-whisper-messages: true
 traffic:
     hide-online-players: true

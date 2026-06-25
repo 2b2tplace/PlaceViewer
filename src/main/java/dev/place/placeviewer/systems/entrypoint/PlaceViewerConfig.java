@@ -64,14 +64,6 @@ public class PlaceViewerConfig extends YamlConfiguration {
         return getInt("ratelimiter.max-send-rate");
     }
 
-    public long regionCacheTimeout() {
-        return getLong("region-cache.region-cache-timeout-millis");
-    }
-
-    public long chunkCacheTimeout() {
-        return getLong("region-cache.chunk-cache-timeout-millis");
-    }
-
     @NotNull
     public List<String> allowedCommands() {
         return getStringList("commands.allowed-commands");
@@ -91,12 +83,36 @@ public class PlaceViewerConfig extends YamlConfiguration {
         @NotNull
         public static final String ANTISPAM_PREFIX = "antispam.";
 
-        public int maxViolations() {
-            return getInt(ANTISPAM_PREFIX + "max-violations");
+        public int maxBaselineViolations() {
+            return getInt(ANTISPAM_PREFIX + "max-baseline-violations");
         }
 
-        public long perTicks() {
-            return getLong(ANTISPAM_PREFIX + "per-ticks");
+        public int maxStrictViolations() {
+            return getInt(ANTISPAM_PREFIX + "max-strict-violations");
+        }
+
+        public int maxFallbackViolations() {
+            return getInt(ANTISPAM_PREFIX + "max-fallback-violations");
+        }
+
+        public double baselineMinSpamConfidence() {
+            return getDouble(ANTISPAM_PREFIX + "baseline-minimum-spam-confidence");
+        }
+
+        public double strictMinSpamConfidence() {
+            return getDouble(ANTISPAM_PREFIX + "strict-minimum-spam-confidence");
+        }
+
+        public double fallbackMinSpamConfidence() {
+            return getDouble(ANTISPAM_PREFIX + "fallback-minimum-spam-confidence");
+        }
+
+        public long baselineRatelimitMillis() {
+            return getLong(ANTISPAM_PREFIX + "baseline-ratelimit-millis");
+        }
+
+        public long strictRatelimitMillis() {
+            return getLong(ANTISPAM_PREFIX + "strict-ratelimit-millis");
         }
 
         public long spamToleranceMillis() {
@@ -107,14 +123,11 @@ public class PlaceViewerConfig extends YamlConfiguration {
             return getInt(ANTISPAM_PREFIX + "length-tolerance-charcount");
         }
 
-        public int violationsBeforeKick() {
-            return getInt(ANTISPAM_PREFIX + "violations-before-kick");
-        }
-
-        @Nullable
+        @NotNull
         public Component kickMessage() {
             final String kickMessage = getString(ANTISPAM_PREFIX + "kick-message");
-            if (kickMessage == null || kickMessage.isBlank()) return null;
+            if (kickMessage == null || kickMessage.isBlank())
+                return Component.text("Disconnected");
 
             return LegacyComponentSerializer.legacyAmpersand().deserialize(kickMessage);
         }
@@ -127,8 +140,16 @@ public class PlaceViewerConfig extends YamlConfiguration {
             return LegacyComponentSerializer.legacyAmpersand().deserialize(warnMessage);
         }
 
-        public boolean silentDiscard() {
-            return getBoolean(ANTISPAM_PREFIX + "silent-discard");
+        @Nullable
+        public Component warnHoverMessage() {
+            final String warnHoverMessage = getString(ANTISPAM_PREFIX + "warn-hover-message");
+            if (warnHoverMessage == null || warnHoverMessage.isBlank()) return null;
+
+            return LegacyComponentSerializer.legacyAmpersand().deserialize(warnHoverMessage);
+        }
+
+        public boolean strictKick() {
+            return getBoolean(ANTISPAM_PREFIX + "strict-kick");
         }
 
         public boolean filterPublicMessages() {
