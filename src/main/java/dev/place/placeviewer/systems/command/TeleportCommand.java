@@ -29,7 +29,7 @@ public class TeleportCommand extends BukkitCommand {
         super(
             TELEPORT_COMMAND,
             "Teleports you to a selected position",
-            "/" + TELEPORT_COMMAND + " <x> <y> <z> [dimension] or /" + TELEPORT_COMMAND + " <x> <z> [dimension]",
+            "/" + TELEPORT_COMMAND + " <x> <y> <z> [yaw] [pitch] or /" + TELEPORT_COMMAND + " <x> <y> <z> [dimension] [yaw pitch] or /" + TELEPORT_COMMAND + " <x> <z> [dimension]",
             List.of("tp")
         );
     }
@@ -83,6 +83,8 @@ public class TeleportCommand extends BukkitCommand {
         Double y = player.getY();
         Double z;
         World newWorld = player.getWorld();
+        float yaw = player.getYaw();
+        float pitch = player.getPitch();
 
         switch (args.length) {
 //            case 1 -> {
@@ -133,17 +135,58 @@ public class TeleportCommand extends BukkitCommand {
 
                 if (x == null || y == null || z == null) return true;
 
+                // if arg[3] parses as a number its yaw otherwise treat as dimension
+                final DoubleParseResult yawResult = parseDouble(player, args[3], null);
+                if (yawResult.result() != null) {
+                    yaw = yawResult.result().floatValue();
+                } else {
+                    final Optional<World> world = DimensionCommand.parseWorld(sender, args[3]);
+                    if (world.isEmpty()) return true;
+                    newWorld = world.get();
+                }
+            }
+            case 5 -> {
+                final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                final DoubleParseResult yResult = parseCoordinate(player, args, 1, 'y');
+                final DoubleParseResult zResult = parseCoordinate(player, args, 2, 'z');
+                final DoubleParseResult yawResult = parseDouble(player, args[3], arg -> "Invalid yaw: '" + arg + "'. The input must be a valid number.");
+                final DoubleParseResult pitchResult = parseDouble(player, args[4], arg -> "Invalid pitch: '" + arg + "'. The input must be a valid number.");
+
+                x = xResult.result();
+                y = yResult.result();
+                z = zResult.result();
+
+                if (x == null || y == null || z == null || yawResult.result() == null || pitchResult.result() == null) return true;
+
+                yaw = yawResult.result().floatValue();
+                pitch = pitchResult.result().floatValue();
+            }
+            case 6 -> {
+                final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
+                final DoubleParseResult yResult = parseCoordinate(player, args, 1, 'y');
+                final DoubleParseResult zResult = parseCoordinate(player, args, 2, 'z');
+                final DoubleParseResult yawResult = parseDouble(player, args[4], arg -> "Invalid yaw: '" + arg + "'. The input must be a valid number.");
+                final DoubleParseResult pitchResult = parseDouble(player, args[5], arg -> "Invalid pitch: '" + arg + "'. The input must be a valid number.");
+
+                x = xResult.result();
+                y = yResult.result();
+                z = zResult.result();
+
+                if (x == null || y == null || z == null || yawResult.result() == null || pitchResult.result() == null) return true;
+
                 final Optional<World> world = DimensionCommand.parseWorld(sender, args[3]);
                 if (world.isEmpty()) return true;
 
                 newWorld = world.get();
+                yaw = yawResult.result().floatValue();
+                pitch = pitchResult.result().floatValue();
             }
             default -> {
                 sender.sendMessage(Component.text("Usage: " + getUsage(), NamedTextColor.RED));
                 return true;
             }
         }
-        teleportSafely(player, new Location(newWorld, x, y, z, player.getYaw(), player.getPitch()));
+        teleportSafely(player, new Location(newWorld, x, y, z, yaw, pitch));
         player.sendMessage(Component.text("You were teleported to "
             + x + " " + y + " " + z + " in dimension "
             + DimensionType.dimensionType(newWorld.getEnvironment())

@@ -14,6 +14,7 @@ commands:
         - 'tp'
         - 'teleport'
         - 'now'
+        - 'old'
         - 'w'
         - 'whisper'
         - 't'
@@ -26,6 +27,18 @@ commands:
         - 'lastmsg'
         - 'ignore'
         - 'i'
+        - 'discord'
+        - 'donate'
+        - 'here'
+        - 'ignorehere'
+        - 'tpa'
+        - 'tpaccept'
+        - 'tpdeny'
+        - 'ignoretpa'
+        - 'back'
+        - 'b'
+        - 'forward'
+        - 'f'
 antispam:
     # the implementation of this antispam takes several features within and between messages into account:
     # - the time between messages.
@@ -88,3 +101,13 @@ antispam:
     filter-whisper-messages: true
 traffic:
     hide-online-players: true
+links:
+    discord: 'https://discord.gg/example'
+    donate: 'https://patreon.com/example'
+announcements:
+  - message: '&bJoin our community on Discord! '
+    url: 'https://discord.gg/example'
+    interval-ticks: 12000
+  - message: '&dSupport us on Patreon! '
+    url: 'https://patreon.com/example'
+    interval-ticks: 24000

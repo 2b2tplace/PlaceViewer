@@ -1,9 +1,15 @@
 package dev.place.placeviewer.systems.entrypoint;
 
+import dev.place.placeviewer.api.chat.ServerChat;
+import dev.place.placeviewer.api.chat.message.SystemMessage;
 import dev.place.placeviewer.systems.command.IgnoreCommand;
 import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +60,19 @@ public final class PlaceViewer {
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(REGION_POOL::sendActionBar), 40L, 40L);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, NativeRegion::mallocTrim, 2400L, 2400L);
+
+        for (final var announcement : config().announcerConfig().announcements()) {
+            final long interval = announcement.intervalTicks();
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> {
+                final Component message = announcement.hasUrl()
+                    ? announcement.message().append(Component.text(announcement.url())
+                        .color(NamedTextColor.AQUA)
+                        .decorate(TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.openUrl(announcement.url())))
+                    : announcement.message();
+                ServerChat.publicMessage(SystemMessage.system(message));
+            }, interval, interval);
+        }
     }
 
     public static void shutdown() {
