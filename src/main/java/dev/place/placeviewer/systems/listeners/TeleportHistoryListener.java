@@ -19,7 +19,6 @@ public class TeleportHistoryListener implements Listener {
         if (BackForwardCommand.NAVIGATING.contains(player.getUniqueId())) return;
 
         final Location destination = event.getTo();
-        if (destination == null) return;
 
         BackForwardCommand.recordTeleport(player.getUniqueId(), destination);
     }
