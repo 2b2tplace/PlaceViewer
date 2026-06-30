@@ -4,7 +4,6 @@ import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import dev.place.placeviewer.systems.region.DimensionType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -56,16 +55,6 @@ public class TeleportCommand extends BukkitCommand {
         return new DoubleParseResult(true, coordinateValue + delta.result());
     }
 
-    private static void teleportToPlayer(@NotNull final Player player, @NotNull final String target) {
-        final Player targetPlayer = Bukkit.getServer().getPlayer(target);
-        if (targetPlayer == null) {
-            player.sendMessage(Component.text("Player '" + target + "' was not found.", NamedTextColor.RED));
-            return;
-        }
-        player.teleport(targetPlayer);
-        player.sendMessage(Component.text("Teleported to player " + target + ".", NamedTextColor.GOLD));
-    }
-
     public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull String @NotNull [] args) {
         if (!(sender instanceof final Player player)) {
             sender.sendMessage("This command can only be used in-game.");
@@ -87,10 +76,6 @@ public class TeleportCommand extends BukkitCommand {
         float pitch = player.getPitch();
 
         switch (args.length) {
-//            case 1 -> {
-//                teleportToPlayer(player, args[0]);
-//                return true;
-//            }
             case 2 -> {
                 final DoubleParseResult xResult = parseCoordinate(player, args, 0, 'x');
                 final DoubleParseResult zResult = parseCoordinate(player, args, 1, 'z');
