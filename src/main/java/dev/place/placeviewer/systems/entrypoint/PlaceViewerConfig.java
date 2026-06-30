@@ -74,6 +74,46 @@ public class PlaceViewerConfig extends YamlConfiguration {
     }
 
     @NotNull
+    public String discordUrl() {
+        return Objects.requireNonNullElse(getString("links.discord"), "");
+    }
+
+    @NotNull
+    public String donateUrl() {
+        return Objects.requireNonNullElse(getString("links.donate"), "");
+    }
+
+    @NotNull
+    private final AnnouncerConfig announcerConfig = new AnnouncerConfig();
+
+    @NotNull
+    public AnnouncerConfig announcerConfig() {
+        return announcerConfig;
+    }
+
+    public class AnnouncerConfig {
+
+        public record Announcement(@NotNull Component message, @NotNull String url, long intervalTicks) {
+            public boolean hasUrl() { return !url.isBlank(); }
+        }
+
+        @NotNull
+        public List<Announcement> announcements() {
+            return getMapList("announcements").stream()
+                .map(map -> {
+                    final String raw = Objects.requireNonNullElse((String) map.get("message"), "");
+                    final Component message = LegacyComponentSerializer.legacyAmpersand().deserialize(raw);
+                    final String url = Objects.requireNonNullElse((String) map.get("url"), "");
+                    final long intervalTicks = map.get("interval-ticks") instanceof final Number n ? n.longValue() : 0L;
+                    return new Announcement(message, url, intervalTicks);
+                })
+                .filter(a -> a.intervalTicks() > 0)
+                .toList();
+        }
+
+    }
+
+    @NotNull
     public AntiSpamConfig antiSpamConfig() {
         return antiSpamConfig;
     }
