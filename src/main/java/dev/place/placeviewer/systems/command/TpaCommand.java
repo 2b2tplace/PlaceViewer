@@ -1,5 +1,6 @@
 package dev.place.placeviewer.systems.command;
 
+import dev.place.placeviewer.api.settings.PersistentUuidSet;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,10 +28,18 @@ public class TpaCommand extends BukkitCommand {
     private static final Map<UUID, UUID> OUTGOING_REQUESTS = new ConcurrentHashMap<>(); // requester -> target
     private static final Map<UUID, Integer> PENDING_TASKS = new ConcurrentHashMap<>(); // requester -> expiry task id
 
-    private static final Set<UUID> IGNORING_TPA = ConcurrentHashMap.newKeySet();
+    private static final PersistentUuidSet IGNORING_TPA = new PersistentUuidSet("tpa-ignores.txt");
 
     public TpaCommand() {
         super("tpa", "Request to teleport to a player", "/tpa <player>", List.of("tpaccept", "tpdeny"));
+    }
+
+    public static void loadUserSettings() {
+        IGNORING_TPA.load();
+    }
+
+    public static void saveUserSettings() {
+        IGNORING_TPA.save();
     }
 
     public static boolean isIgnoring(@NotNull final UUID uuid) {
@@ -39,12 +47,7 @@ public class TpaCommand extends BukkitCommand {
     }
 
     public static boolean toggleIgnore(@NotNull final UUID uuid) {
-        if (IGNORING_TPA.contains(uuid)) {
-            IGNORING_TPA.remove(uuid);
-            return false;
-        }
-        IGNORING_TPA.add(uuid);
-        return true;
+        return IGNORING_TPA.toggle(uuid);
     }
 
     public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull final String @NotNull [] args) {
@@ -66,7 +69,6 @@ public class TpaCommand extends BukkitCommand {
             return true;
         }
         final Player target = Bukkit.getPlayer(args[0]);
-        // a player who is ignoring requests is reported the same as a missing one, so their status is never leaked.
         final Component notFoundOrIgnoring = Component.text("Player '" + args[0] + "' was not found or is ignoring teleport requests.", NamedTextColor.RED);
         if (target == null) {
             requester.sendMessage(notFoundOrIgnoring);

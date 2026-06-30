@@ -1,5 +1,6 @@
 package dev.place.placeviewer.systems.command;
 
+import dev.place.placeviewer.api.settings.PersistentUuidSet;
 import dev.place.placeviewer.systems.entrypoint.annotate.PlaceViewerCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -13,18 +14,24 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @PlaceViewerCommand
 public class HereCommand extends BukkitCommand {
 
     @NotNull
-    private static final Set<UUID> IGNORING_HERE = ConcurrentHashMap.newKeySet();
+    private static final PersistentUuidSet IGNORING_HERE = new PersistentUuidSet("here-ignores.txt");
 
     public HereCommand() {
         super("here", "Broadcast your current coordinates to all players", "/here", List.of());
+    }
+
+    public static void loadUserSettings() {
+        IGNORING_HERE.load();
+    }
+
+    public static void saveUserSettings() {
+        IGNORING_HERE.save();
     }
 
     public static boolean isIgnoring(@NotNull final UUID uuid) {
@@ -32,12 +39,7 @@ public class HereCommand extends BukkitCommand {
     }
 
     public static boolean toggleIgnore(@NotNull final UUID uuid) {
-        if (IGNORING_HERE.contains(uuid)) {
-            IGNORING_HERE.remove(uuid);
-            return false;
-        }
-        IGNORING_HERE.add(uuid);
-        return true;
+        return IGNORING_HERE.toggle(uuid);
     }
 
     public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull final String @NotNull [] args) {

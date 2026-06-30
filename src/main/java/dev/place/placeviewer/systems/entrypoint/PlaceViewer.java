@@ -2,7 +2,9 @@ package dev.place.placeviewer.systems.entrypoint;
 
 import dev.place.placeviewer.api.chat.ServerChat;
 import dev.place.placeviewer.api.chat.message.SystemMessage;
+import dev.place.placeviewer.systems.command.HereCommand;
 import dev.place.placeviewer.systems.command.IgnoreCommand;
+import dev.place.placeviewer.systems.command.TpaCommand;
 import dev.place.placeviewer.systems.region.RegionPool;
 import dev.place.placeviewer.systems.region.jni.NativeRegion;
 import dev.place.placeviewer.systems.region.jni.NativeRegionException;
@@ -57,6 +59,8 @@ public final class PlaceViewer {
         }
         PlaceViewerManager.registerAll();
         IgnoreCommand.loadUserSettings();
+        HereCommand.loadUserSettings();
+        TpaCommand.loadUserSettings();
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, () -> Bukkit.getOnlinePlayers().forEach(REGION_POOL::sendActionBar), 40L, 40L);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(PLUGIN, NativeRegion::mallocTrim, 2400L, 2400L);
@@ -77,6 +81,8 @@ public final class PlaceViewer {
 
     public static void shutdown() {
         IgnoreCommand.saveUserSettings();
+        HereCommand.saveUserSettings();
+        TpaCommand.saveUserSettings();
     }
 
     @NotNull

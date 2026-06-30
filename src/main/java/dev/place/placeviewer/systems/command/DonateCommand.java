@@ -21,10 +21,6 @@ public class DonateCommand extends BukkitCommand {
     }
 
     public boolean execute(@NotNull final CommandSender sender, @NotNull final String command, @NotNull final String @NotNull [] args) {
-        if (!(sender instanceof final Player player)) {
-            sender.sendMessage("This command can only be used in-game.");
-            return true;
-        }
         final String url = PlaceViewer.config().donateUrl();
         if (url.isBlank()) {
             player.sendMessage(Component.text("Donation link is not configured.", NamedTextColor.RED));
