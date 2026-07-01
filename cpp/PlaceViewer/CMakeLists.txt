@@ -13,7 +13,7 @@ include_directories(${JNI_INCLUDE_DIRS})
 
 include(FetchContent)
 FetchContent_Declare(zvcr
-        GIT_REPOSITORY git@github.com:2b2tplace/zvcr.git
+        GIT_REPOSITORY https://github.com/2b2tplace/zvcr.git
         GIT_TAG        1.0.0.0
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
@@ -21,7 +21,7 @@ FetchContent_Declare(zvcr
 FetchContent_MakeAvailable(zvcr)
 
 FetchContent_Declare(mc_cpp
-        GIT_REPOSITORY git@github.com:2b2tplace/mc-cpp.git
+        GIT_REPOSITORY https://github.com/2b2tplace/mc-cpp.git
         GIT_TAG        0.1.12.6
         GIT_PROGRESS TRUE
         GIT_SHALLOW TRUE
