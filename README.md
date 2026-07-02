@@ -48,7 +48,7 @@ libary, and a Java component for the Ignite mod.
 - [Boost Iostreams](https://www.boost.org/library/latest/iostreams/)
 
 ### Clone & Build
-> NOTE: These instructions WILL change very soon; this entire build process can be automated in gradle directly.
+> Note: These instructions WILL change very soon; this entire build process can be automated in gradle directly.
 ```sh
 git clone https://github.com/2b2tplace/PlaceViewer.git
 
