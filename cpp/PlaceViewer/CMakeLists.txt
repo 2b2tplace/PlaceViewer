@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(PlaceViewer)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_FLAGS "-fPIC")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BOTCRAFT_GAME_VERSION "1.21.4" CACHE STRING "Minecraft game version")
 set(PROTOCOLCRAFT_STATIC ON)
 find_package(JNI REQUIRED)
@@ -37,4 +37,12 @@ target_link_libraries(PlaceViewer
         PRIVATE protocolCraft
 )
 target_compile_options(PlaceViewer PRIVATE $<$<CONFIG:Release>:-O3>)
-set_target_properties(PlaceViewer PROPERTIES OUTPUT_NAME "PlaceViewer-${CMAKE_SYSTEM_PROCESSOR}")
+# Match the arch names the Java loader (PlaceViewerLibrary.java) expects
+# ("x86_64"/"aarch64"): CMAKE_SYSTEM_PROCESSOR is "AMD64"/"ARM64" on Windows.
+string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _pv_arch)
+if(_pv_arch STREQUAL "amd64" OR _pv_arch STREQUAL "x86_64")
+    set(_pv_arch "x86_64")
+elseif(_pv_arch STREQUAL "arm64" OR _pv_arch STREQUAL "aarch64")
+    set(_pv_arch "aarch64")
+endif()
+set_target_properties(PlaceViewer PROPERTIES OUTPUT_NAME "PlaceViewer-${_pv_arch}")
