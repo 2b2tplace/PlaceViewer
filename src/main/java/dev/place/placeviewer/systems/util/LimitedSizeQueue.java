@@ -7,21 +7,28 @@ import java.util.*;
 @SuppressWarnings("unused")
 public class LimitedSizeQueue<T> implements Collection<T> {
 
-    private final List<T> queue;
+    private final ArrayDeque<T> queue;
     private final int limitedSize;
 
     public LimitedSizeQueue(final int limitedSize) {
-        queue = new ArrayList<>();
+        queue = new ArrayDeque<>(limitedSize);
         this.limitedSize = limitedSize;
     }
 
     public LimitedSizeQueue(@NotNull final Collection<T> other, final int limitedSize) {
-        queue = new ArrayList<>(other);
+        queue = new ArrayDeque<>(other);
         this.limitedSize = limitedSize;
     }
 
     public List<T> queue() {
-        return queue;
+        return new ArrayList<>(queue);
+    }
+
+    /**
+     * Returns the last element without copying to an ArrayList.
+     */
+    public T getLast() {
+        return queue.peekLast();
     }
 
     public int size() {
@@ -53,7 +60,7 @@ public class LimitedSizeQueue<T> implements Collection<T> {
     }
 
     public boolean add(final T o) {
-        if (queue.size() >= limitedSize) queue.removeFirst();
+        if (queue.size() >= limitedSize) queue.pollFirst(); // O(1) instead of ArrayList.removeFirst() O(n)
         return queue.add(o);
     }
 

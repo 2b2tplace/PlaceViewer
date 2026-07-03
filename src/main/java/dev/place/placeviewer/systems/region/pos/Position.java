@@ -33,9 +33,20 @@ public record Position(int x, int z, @NotNull DimensionType dimensionType) {
     public double distance(@NotNull final Position other) {
         if (dimensionType != other.dimensionType) return Double.POSITIVE_INFINITY;
 
-        final double dx = Math.abs((double) x - (double) other.x);
-        final double dz = Math.abs((double) z - (double) other.z);
+        final double dx = (double) x - (double) other.x;
+        final double dz = (double) z - (double) other.z;
         return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    /**
+     * Squared distance without sqrt — faster for sorting/comparison.
+     */
+    public double distanceSquared(@NotNull final Position other) {
+        if (dimensionType != other.dimensionType) return Double.POSITIVE_INFINITY;
+
+        final double dx = (double) x - (double) other.x;
+        final double dz = (double) z - (double) other.z;
+        return dx * dx + dz * dz;
     }
 
 }

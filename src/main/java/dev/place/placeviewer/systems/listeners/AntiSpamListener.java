@@ -203,10 +203,12 @@ public class AntiSpamListener implements Listener {
     }
 
     @NotNull
+    private static final Pattern URL_PATTERN = Pattern.compile(URL_REGEX, Pattern.CASE_INSENSITIVE);
+
+    @NotNull
     private static List<String> extractURLs(@NotNull final String text) {
         final List<String> containedUrls = new ArrayList<>();
-        final Pattern pattern = Pattern.compile(URL_REGEX, Pattern.CASE_INSENSITIVE);
-        final Matcher urlMatcher = pattern.matcher(text);
+        final Matcher urlMatcher = URL_PATTERN.matcher(text);
 
         while (urlMatcher.find()) {
             containedUrls.add(text.substring(urlMatcher.start(0),
@@ -221,10 +223,10 @@ public class AntiSpamListener implements Listener {
         final List<String> urls = extractURLs(message);
 
         final String withoutLinks = message.replaceAll(URL_REGEX, "");
-        final String decoded = Unidecode.decode(withoutLinks).toLowerCase(); // convert unicode characters into english alphabet equivalents
+        final String decoded = Unidecode.decode(withoutLinks).toLowerCase();
 
         final List<String> punctuationSplit = Arrays.stream(decoded.split(" "))
-                .flatMap(s -> Arrays.stream(s.split(PUNCTUATION_SPLIT_REGEX))) // split any punctuation into its own element in the list for later
+                .flatMap(s -> Arrays.stream(s.split(PUNCTUATION_SPLIT_REGEX)))
                 .toList();
 
         final List<String> sanitized = new ArrayList<>(punctuationSplit.stream()
@@ -233,11 +235,11 @@ public class AntiSpamListener implements Listener {
                 .filter(s -> !s.isBlank())
                 .toList());
 
-        final List<String> punctuation = punctuationSplit.stream()
-                .filter(s -> PUNCTUATION.matcher(s).matches())
-                .toList();
-
-        sanitized.removeAll(punctuation);
+        final Set<String> punctuationSet = new HashSet<>();
+        for (final String s : punctuationSplit) {
+            if (PUNCTUATION.matcher(s).matches()) punctuationSet.add(s);
+        }
+        sanitized.removeAll(punctuationSet);
         sanitized.sort(Comparator.naturalOrder());
 
         return new MessageFootprint(message, sanitized, urls, timestamp);
@@ -246,10 +248,10 @@ public class AntiSpamListener implements Listener {
     @NotNull
     private static List<Long> zeroDifference(@NotNull final List<Long> from, final long min) {
         final List<Long> testFor = new ArrayList<>();
-        for (int i = 0; i < from.size(); i++) {
+        final int size = from.size();
+        for (int i = 0; i < size; i++) {
             final long c = from.get(i);
-            for (int j = 0; j < from.size(); j++) {
-                if (j == i) continue;
+            for (int j = i + 1; j < size; j++) { // start from i+1 to avoid redundant comparisons
                 final long n = from.get(j);
                 if (abs(n - c) < min) {
                     testFor.add(c);
@@ -261,8 +263,9 @@ public class AntiSpamListener implements Listener {
     }
 
     private static void addDeviations(@NotNull final Collection<Long> addTo, @NotNull final List<Long> from) {
-        if (from.isEmpty()) return;
-        for (int i = 0; i < from.size() - 1; i++) {
+        final int size = from.size();
+        if (size < 2) return;
+        for (int i = 0; i < size - 1; i++) {
             final long c = from.get(i);
             final long n = from.get(i + 1);
             addTo.add(abs(c - n));
@@ -271,8 +274,9 @@ public class AntiSpamListener implements Listener {
 
     @NotNull
     private static List<Long> zeroDeviation(@NotNull final LimitedSizeQueue<MessageFootprint> queue) {
-        final List<Long> timeDelays = new ArrayList<>();
-        addDeviations(timeDelays, queue.queue().stream().map(MessageFootprint::timestamp).toList());
+        final List<Long> timestamps = queue.stream().map(MessageFootprint::timestamp).toList();
+        final List<Long> timeDelays = new ArrayList<>(timestamps.size());
+        addDeviations(timeDelays, timestamps);
         return zeroDifference(timeDelays, 100);
     }
 
@@ -283,7 +287,7 @@ public class AntiSpamListener implements Listener {
 
     @NotNull
     private static Optional<MessageFootprint> lastMessageFootprint(@NotNull final LimitedSizeQueue<MessageFootprint> queue) {
-        return queue.isEmpty() ? Optional.empty() : Optional.ofNullable(queue.queue().get(queue.size() - 1));
+        return queue.isEmpty() ? Optional.empty() : Optional.ofNullable(queue.getLast());
     }
 
     private static double spamProbability(@NotNull final MessageFootprint lastFootprint, @NotNull final MessageFootprint footprint,
@@ -301,9 +305,8 @@ public class AntiSpamListener implements Listener {
     private double spamProbability(@NotNull final Player player, @NotNull final ChatMessage message) {
         final UUID uuid = player.getUniqueId();
         final MessageFootprint footprint = messageFootprint(message.message());
-        footprints.putIfAbsent(uuid, new LimitedSizeQueue<>(32));
+        final LimitedSizeQueue<MessageFootprint> playerFootprints = footprints.computeIfAbsent(uuid, k -> new LimitedSizeQueue<>(32));
 
-        final LimitedSizeQueue<MessageFootprint> playerFootprints = footprints.get(uuid);
         final Optional<MessageFootprint> lastFootprint = lastMessageFootprint(playerFootprints);
         final long timeSinceLast = lastFootprint.map(f -> abs(footprint.timestamp() - f.timestamp())).orElse(Long.MAX_VALUE);
 
@@ -313,19 +316,19 @@ public class AntiSpamListener implements Listener {
                 .min()
                 .orElse(Integer.MAX_VALUE);
 
-        footprints.get(uuid).add(footprint);
+        playerFootprints.add(footprint);
 
         final double result = lastFootprint.map(f -> spamProbability(f, footprint, playerFootprints, timeSinceLast, smallestLevenshtein)).orElse(0.0d);
-        spamProbabilities.putIfAbsent(uuid, new LimitedSizeQueue<>(32));
+        final LimitedSizeQueue<Double> probabilities = spamProbabilities.computeIfAbsent(uuid, k -> new LimitedSizeQueue<>(32));
 
         int equalProbabilities = 0;
-        for (final double previousProbability : spamProbabilities.get(uuid)) {
+        for (final double previousProbability : probabilities) {
             if (Math.abs(result - previousProbability) < 1e-5)
                 equalProbabilities++;
         }
-        spamProbabilities.get(uuid).add(result);
+        probabilities.add(result);
 
-        final double randomizedSpam = 4.0 * (double) equalProbabilities / spamProbabilities.get(uuid).size();
+        final double randomizedSpam = 4.0 * (double) equalProbabilities / probabilities.size();
         return Math.clamp(result + randomizedSpam, 0, 1);
     }
 

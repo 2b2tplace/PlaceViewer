@@ -94,7 +94,12 @@ public class IgnoreCommand extends BukkitCommand {
 
     @NotNull
     public static Set<UUID> ignoredByUsers(@NotNull final UUID user) {
-        return ignoreLists().keySet().stream().filter(ignoredBy -> ignored(user, ignoredBy)).collect(Collectors.toSet());
+        final Set<UUID> result = new HashSet<>();
+        for (final Map.Entry<UUID, Set<UUID>> entry : ignoreLists().entrySet()) {
+            if (entry.getValue() != null && entry.getValue().contains(user))
+                result.add(entry.getKey());
+        }
+        return result;
     }
 
     public static boolean toggleIgnored(@NotNull final UUID user, @NotNull final UUID ignoredBy) {

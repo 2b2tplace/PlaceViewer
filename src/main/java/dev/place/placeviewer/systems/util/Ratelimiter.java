@@ -64,12 +64,10 @@ public class Ratelimiter<T> {
     }
 
     public boolean test(@NotNull final T obj)  {
-        violatedCount.putIfAbsent(obj, 0);
-        violatedCount.merge(obj, 1, Integer::sum);
-        expiringFlags.putIfAbsent(obj, new ExpiringFlag(perMillis));
+        final Integer count = violatedCount.merge(obj, 1, Integer::sum);
+        final ExpiringFlag expiringFlag = expiringFlags.computeIfAbsent(obj, k -> new ExpiringFlag(perMillis));
 
-        final ExpiringFlag expiringFlag = expiringFlags.get(obj);
-        final boolean countViolation = isViolation(violationCount(obj), expiringFlag);
+        final boolean countViolation = isViolation(count, expiringFlag);
 
         expiringFlag.reset();
 

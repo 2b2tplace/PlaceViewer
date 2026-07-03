@@ -6,6 +6,8 @@
 #include <zvcr/io/serialize/deserialize.hpp>
 #include <filesystem>
 #include <malloc.h>
+#include <algorithm>
+#include <functional>
 
 JNIEXPORT void JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_initialize(JNIEnv *jEnv, jclass, jstring jRegistryDirectory) {
     namespace fs = std::filesystem;
@@ -135,7 +137,10 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
     for (const auto &[timestamp, _] : segment->tileEntities.reverseDeltas) {
         epochSet.emplace(timestamp * 1000L); // seconds -> millis
     }
-    const auto epochs = std::vector<time_t>{epochSet.begin(), epochSet.end()};
+
+    // Convert to sorted vector for binary search support
+    std::vector<time_t> epochs{epochSet.begin(), epochSet.end()};
+    std::sort(epochs.begin(), epochs.end(), std::greater<>{}); // descending order to match Java side
     const auto len = static_cast<jsize>(epochs.size());
     const auto jEpochs = jEnv->NewLongArray(len);
     if (!jEpochs) return nullptr;

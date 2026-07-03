@@ -42,7 +42,7 @@ public class ServerChat {
 
         final Component component = message.send(Bukkit.getConsoleSender());
         final String messagePlain = PlainTextComponentSerializer.plainText().serialize(component);
-        if (!messagePlain.isBlank()) Bukkit.getConsoleSender().sendMessage(message.send(Bukkit.getConsoleSender()));
+        if (!messagePlain.isBlank()) Bukkit.getConsoleSender().sendMessage(component);
     }
 
     public static void publicMessage(@Nullable final ChatMessage message) {

@@ -183,20 +183,8 @@ public class TeleportCommand extends BukkitCommand {
     private static final double MAX_COORDINATE = 29999999.0d;
 
     public static boolean teleportSafely(@NotNull final Player player, @NotNull final Location target) {
-        double x = target.x();
-        double z = target.z();
-
-        if (x > MAX_COORDINATE)
-            x = MAX_COORDINATE;
-
-        if (x < -MAX_COORDINATE)
-            x = -MAX_COORDINATE;
-
-        if (z > MAX_COORDINATE)
-            z = MAX_COORDINATE;
-
-        if (z < -MAX_COORDINATE)
-            z = -MAX_COORDINATE;
+        final double x = Math.clamp(target.x(), -MAX_COORDINATE, MAX_COORDINATE);
+        final double z = Math.clamp(target.z(), -MAX_COORDINATE, MAX_COORDINATE);
 
         return player.teleport(new Location(target.getWorld(), x, target.y(), z, target.getYaw(), target.getPitch()));
     }

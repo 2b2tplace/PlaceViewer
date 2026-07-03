@@ -19,9 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class PlaceViewer {
 
@@ -38,7 +38,7 @@ public final class PlaceViewer {
     public static final Logger LOGGER = LoggerFactory.getLogger(PlaceViewer.class.getSimpleName());
 
     @NotNull
-    private static final List<BukkitCommand> REGISTERED_COMMANDS = new ArrayList<>();
+    private static final Set<String> REGISTERED_COMMANDS = ConcurrentHashMap.newKeySet();
 
     @NotNull
     public static final String COMMAND_FALLBACK_PREFIX = "placeviewer";
@@ -96,7 +96,7 @@ public final class PlaceViewer {
     }
 
     public static void register(@NotNull final BukkitCommand command) {
-        REGISTERED_COMMANDS.add(command);
+        REGISTERED_COMMANDS.add(command.getName());
     }
 
     @NotNull
@@ -112,8 +112,7 @@ public final class PlaceViewer {
     }
 
     public static boolean isRegisteredCommand(@NotNull final String commandName) {
-        return REGISTERED_COMMANDS.stream()
-            .anyMatch(command -> command.getName().equals(commandName));
+        return REGISTERED_COMMANDS.contains(commandName);
     }
 
 }

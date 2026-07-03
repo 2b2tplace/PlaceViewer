@@ -39,8 +39,7 @@ public final class Region implements AutoCloseable {
         this.regionZ = regionZ;
         this.dimensionType = dimensionType;
 
-        for (int i = 0; i < 1024; i++)
-            chunkEpochIndices.putIfAbsent(i, new EpochIndex());
+        // Lazy initialization: only create EpochIndex objects when needed
     }
 
     private Region(@NotNull final String parentDirectory, final int regionX, final int regionZ,
@@ -52,7 +51,7 @@ public final class Region implements AutoCloseable {
             for (int z = 0; z < 32; z++) {
                 final int key = 32 * x + z;
                 indexedTimestamps = NativeRegion.indexRegionEpochs(regionObjectID, x, z);
-                final EpochIndex chunkEpochIndex = chunkEpochIndices.get(key);
+                final EpochIndex chunkEpochIndex = chunkEpochIndices.computeIfAbsent(key, k -> new EpochIndex());
 
                 if (indexedTimestamps != null) {
                     final List<Date> dates = EpochIndex.dates(indexedTimestamps);
@@ -72,7 +71,7 @@ public final class Region implements AutoCloseable {
     public EpochIndex epochIndex(final int absChunkX, final int absChunkZ) {
         final int x = absChunkX & 31;
         final int z = absChunkZ & 31;
-        return chunkEpochIndices.get(32 * x + z);
+        return chunkEpochIndices.computeIfAbsent(32 * x + z, k -> new EpochIndex());
     }
 
     @NotNull

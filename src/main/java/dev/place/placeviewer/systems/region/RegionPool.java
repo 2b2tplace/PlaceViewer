@@ -114,13 +114,18 @@ public class RegionPool {
     private void removeViewer(@NotNull final Position chunkPosition, @NotNull final Predicate<Epoch> epochFilter,
                               @NotNull final Map<Epoch, ChunkEntry> chunkEntries,
                               @NotNull final UUID viewer, final boolean unloadChunk) {
+        boolean allEmpty = true;
         for (final Map.Entry<Epoch, ChunkEntry> chunkEntry : chunkEntries.entrySet()) {
-            if (epochFilter.test(chunkEntry.getKey())) continue;
+            if (epochFilter.test(chunkEntry.getKey())) {
+                allEmpty = false;
+                continue;
+            }
 
             chunkEntry.getValue().viewers.remove(viewer);
+            if (!chunkEntry.getValue().viewers.isEmpty()) allEmpty = false;
         }
         chunkEntries.entrySet().removeIf(e -> e.getValue().viewers.isEmpty());
-        if (unloadChunk && chunkEntries.values().stream().allMatch(entry -> entry.viewers.isEmpty()))
+        if (unloadChunk && allEmpty)
             chunks.remove(chunkPosition, chunkEntries);
     }
 
@@ -257,7 +262,7 @@ public class RegionPool {
             final int chunkZ = CoordinateUtils.getChunkZ(reload);
             sortedChunksByDistance.add(new Position(chunkX, chunkZ, position.dimensionType()));
         }
-        sortedChunksByDistance.sort(Comparator.comparingDouble(pos -> pos.distance(position)));
+        sortedChunksByDistance.sort(Comparator.comparingDouble(pos -> pos.distanceSquared(position)));
 
         for (final Position chunkPos : sortedChunksByDistance) {
             final long chunkKey = CoordinateUtils.getChunkKey(chunkPos.x(), chunkPos.z());

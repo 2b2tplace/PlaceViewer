@@ -3,8 +3,8 @@ package dev.place.placeviewer.systems.region;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 public enum DimensionType {
@@ -34,18 +34,27 @@ public enum DimensionType {
 
     @NotNull
     public static Optional<DimensionType> ofString(@NotNull final String string) {
-        return Arrays.stream(values())
-            .filter(dimensionType -> dimensionType.toString().equals(string))
-            .findAny();
+        for (final DimensionType dimensionType : values()) {
+            if (dimensionType.name.equals(string)) return Optional.of(dimensionType);
+        }
+        return Optional.empty();
     }
+
+    @Nullable
+    private volatile World cachedWorld;
+    private volatile boolean worldCached = false;
 
     @NotNull
     public Optional<World> world() {
-        return Bukkit.getServer()
+        if (worldCached) return Optional.ofNullable(cachedWorld);
+        cachedWorld = Bukkit.getServer()
             .getWorlds()
             .stream()
             .filter(w -> DimensionType.dimensionType(w.getEnvironment()) == this)
-            .findAny();
+            .findFirst()
+            .orElse(null);
+        worldCached = true;
+        return Optional.ofNullable(cachedWorld);
     }
 
     @NotNull

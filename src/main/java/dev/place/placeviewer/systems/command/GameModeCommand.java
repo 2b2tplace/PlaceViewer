@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 //@PlaceViewerCommand
 public class GameModeCommand extends BukkitCommand {
@@ -38,16 +37,20 @@ public class GameModeCommand extends BukkitCommand {
             return true;
         }
         final String gameModeStr = args[0];
-        final Optional<GameMode> newGameMode = Arrays.stream(GameMode.values())
-            .filter(gm -> gm.name().equalsIgnoreCase(gameModeStr))
-            .findAny();
+        GameMode newGameMode = null;
+        for (final GameMode gm : GameMode.values()) {
+            if (gm.name().equalsIgnoreCase(gameModeStr)) {
+                newGameMode = gm;
+                break;
+            }
+        }
 
-        if (newGameMode.isEmpty()) {
+        if (newGameMode == null) {
             sender.sendMessage(Component.text("Usage: " + usageMessage, NamedTextColor.RED));
             return true;
         }
-        player.setGameMode(newGameMode.get());
-        player.sendMessage(Component.text("Set Game Mode to " + StringUtils.capitalize(newGameMode.get().name().toLowerCase()) + ".", NamedTextColor.GOLD));
+        player.setGameMode(newGameMode);
+        player.sendMessage(Component.text("Set Game Mode to " + StringUtils.capitalize(newGameMode.name().toLowerCase()) + ".", NamedTextColor.GOLD));
         return true;
     }
 

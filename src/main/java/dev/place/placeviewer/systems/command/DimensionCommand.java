@@ -86,10 +86,13 @@ public class DimensionCommand extends BukkitCommand {
     }
 
     @NotNull
+    private static final List<String> WORLD_NAMES = Arrays.stream(DimensionType.values())
+        .map(DimensionType::toString)
+        .toList();
+
+    @NotNull
     private static List<String> worldNames() {
-        return Arrays.stream(DimensionType.values())
-            .map(DimensionType::toString)
-            .toList();
+        return WORLD_NAMES;
     }
 
 }

@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
@@ -54,21 +53,31 @@ public class EpochIndex {
     }
 
     public long closestTimestamp(final long compareToTimestampMillis) {
-        final Instant target = Instant.ofEpochMilli(compareToTimestampMillis);
+        if (dates.isEmpty()) return compareToTimestampMillis;
 
-        Instant closest = null;
-        Duration minDuration = null;
-
-        for (final Date date : dates) {
-            final Instant candidate = date.toInstant();
-            final Duration duration = Duration.between(target, candidate).abs();
-
-            if (minDuration == null || duration.compareTo(minDuration) < 0) {
-                minDuration = duration;
-                closest = candidate;
+        // Binary search for the closest timestamp (dates are sorted descending in indexDates)
+        int lo = 0, hi = dates.size() - 1;
+        while (lo < hi) {
+            final int mid = (lo + hi) >>> 1;
+            if (dates.get(mid).getTime() > compareToTimestampMillis) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
             }
         }
-        return closest != null ? closest.toEpochMilli() : compareToTimestampMillis;
+
+        // Check lo and lo-1 to find the closest
+        long closest = dates.get(lo).getTime();
+        long minDiff = Math.abs(closest - compareToTimestampMillis);
+        if (lo > 0) {
+            final long alt = dates.get(lo - 1).getTime();
+            final long altDiff = Math.abs(alt - compareToTimestampMillis);
+            if (altDiff < minDiff) {
+                closest = alt;
+                minDiff = altDiff;
+            }
+        }
+        return closest;
     }
 
     public void indexDates() {
@@ -88,10 +97,13 @@ public class EpochIndex {
                 .computeIfAbsent(month, m -> new TreeMap<>())
                 .computeIfAbsent(day, d -> new ArrayList<>());
 
-            if (exactDates.stream().noneMatch(existing -> {
-                calendar.setTime(existing);
-                return hour == calendar.get(Calendar.HOUR_OF_DAY);
-            })) {
+            // O(1) hour dedup: only check the last added date's hour
+            boolean hourExists = false;
+            if (!exactDates.isEmpty()) {
+                calendar.setTime(exactDates.getFirst());
+                hourExists = hour == calendar.get(Calendar.HOUR_OF_DAY);
+            }
+            if (!hourExists) {
                 condensedDates.addFirst(date);
                 exactDates.addFirst(date);
             }

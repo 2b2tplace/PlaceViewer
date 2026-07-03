@@ -11,19 +11,28 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @PlaceViewerListener
 public class PlayerCommandFilter implements Listener {
 
     public static boolean isCommandDisabled(@NotNull final String commandName) {
-        final List<String> allowedCommands = PlaceViewer.config().allowedCommands();
+        final Set<String> allowedCommands = ALLOWED_COMMANDS_CACHE;
         final String stripped = PlaceViewer.stripCommandPrefix(commandName);
         return !allowedCommands.contains(commandName) && !allowedCommands.contains(stripped);
     }
 
+    @NotNull
+    private static volatile Set<String> ALLOWED_COMMANDS_CACHE = Set.of();
+
+    private static void refreshAllowedCommandsCache() {
+        ALLOWED_COMMANDS_CACHE = new HashSet<>(PlaceViewer.config().allowedCommands());
+    }
+
     @EventHandler
     private void onCommandSend(@NotNull final PlayerCommandSendEvent event) {
+        refreshAllowedCommandsCache();
         if (event.getPlayer().isOp()) return;
 
         event.getCommands().removeIf(PlayerCommandFilter::isCommandDisabled);

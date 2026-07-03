@@ -31,8 +31,9 @@ namespace placeviewer {
     }
 
     template<typename SectionDataType>
-    auto packPalettedData(mc::anvil::PackedData &data, const uint64_t bitsPerEntry,
-                          const std::function<auto(size_t) -> int32_t> &valueGetter) -> void {
+    auto packPalettedDataDirect(mc::anvil::PackedData &data, const uint64_t bitsPerEntry,
+                                const mc::anvil::PaletteIndices &indices,
+                                const mc::anvil::UnpackedData<SectionDataType> &unpacked) -> void {
         const auto entryMask = (static_cast<uint64_t>(1) << bitsPerEntry) - 1;
         const auto entriesPerLong = 64 / bitsPerEntry;
         const auto packedSize = (mc::anvil::SectionDataInfo<SectionDataType>::sectionSize + entriesPerLong - 1) / entriesPerLong;
@@ -42,7 +43,31 @@ namespace placeviewer {
             const auto longIndex = i / entriesPerLong;
             const auto bitIndex = i % entriesPerLong * bitsPerEntry;
 
-            const auto packedValue = static_cast<int64_t>(valueGetter(i) & entryMask);
+            assert(i < unpacked.size());
+            assert(unpacked[i] < indices.size());
+            const auto packedValue = static_cast<int64_t>(indices[unpacked[i]] & entryMask);
+
+            assert(longIndex < data.size());
+            data[longIndex] &= ~(static_cast<int64_t>(entryMask) << bitIndex);
+            data[longIndex] |= packedValue << bitIndex;
+        }
+    }
+
+    // Overload for direct palette (no index mapping needed)
+    template<typename SectionDataType>
+    auto packPalettedDataIdentity(mc::anvil::PackedData &data, const uint64_t bitsPerEntry,
+                                  const mc::anvil::UnpackedData<SectionDataType> &unpacked) -> void {
+        const auto entryMask = (static_cast<uint64_t>(1) << bitsPerEntry) - 1;
+        const auto entriesPerLong = 64 / bitsPerEntry;
+        const auto packedSize = (mc::anvil::SectionDataInfo<SectionDataType>::sectionSize + entriesPerLong - 1) / entriesPerLong;
+
+        data.resize(packedSize);
+        for (size_t i = 0; i < mc::anvil::SectionDataInfo<SectionDataType>::sectionSize; i++) {
+            const auto longIndex = i / entriesPerLong;
+            const auto bitIndex = i % entriesPerLong * bitsPerEntry;
+
+            assert(i < unpacked.size());
+            const auto packedValue = static_cast<int64_t>(unpacked[i] & entryMask);
 
             assert(longIndex < data.size());
             data[longIndex] &= ~(static_cast<int64_t>(entryMask) << bitIndex);
@@ -65,17 +90,21 @@ namespace placeviewer {
             return palette[0];
         }
         auto bitsPerEntry = mc::anvil::getBitsPerIndex<SectionDataType>(palette.size());
-        std::function<auto(size_t) -> int32_t> valueGetter = [&](const size_t i) {
-            assert(i < unpacked.size());
-            assert(unpacked[i] < indices.size());
-            return indices[unpacked[i]];
-        };
         if (bitsPerEntry > mc::anvil::SectionDataInfo<SectionDataType>::paletteMaxBits) {
-            bitsPerEntry = 15; // direct palette
-            valueGetter = [&](const size_t i) {
-                assert(i < unpacked.size());
-                return unpacked[i];
-            };
+            // direct palette — no index mapping needed
+            bitsPerEntry = 15;
+            pc::WriteData<uint8_t>(static_cast<uint8_t>(bitsPerEntry), buffer);
+            pc::WriteData<pc::VarInt>(static_cast<int32_t>(palette.size()), buffer);
+            for (const auto entry : palette)
+                pc::WriteData<pc::VarInt>(entry, buffer);
+
+            mc::anvil::PackedData packedData;
+            packPalettedDataIdentity<SectionDataType>(packedData, bitsPerEntry, unpacked);
+            pc::WriteData<pc::VarInt>(static_cast<int32_t>(packedData.size()), buffer);
+            for (const auto packedEntry : packedData)
+                pc::WriteData<int64_t>(packedEntry, buffer);
+
+            return palette;
         }
         pc::WriteData<uint8_t>(static_cast<uint8_t>(bitsPerEntry), buffer);
         pc::WriteData<pc::VarInt>(static_cast<int32_t>(palette.size()), buffer);
@@ -83,7 +112,7 @@ namespace placeviewer {
             pc::WriteData<pc::VarInt>(entry, buffer);
 
         mc::anvil::PackedData packedData;
-        packPalettedData<SectionDataType>(packedData, bitsPerEntry, valueGetter);
+        packPalettedDataDirect<SectionDataType>(packedData, bitsPerEntry, indices, unpacked);
         pc::WriteData<pc::VarInt>(static_cast<int32_t>(packedData.size()), buffer); // NOTE packed data length is no longer sent in 1.21.5
         for (const auto packedEntry : packedData)
             pc::WriteData<int64_t>(packedEntry, buffer);
