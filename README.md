@@ -67,7 +67,7 @@ cmake --build build --target PlaceViewer --parallel
 
 # zip shared libraries to include in the jar
 cd ../..
-mv cpp/PlaceViewer/libPlaceViewer-x86_64.so src/main/resources/
+mv cpp/PlaceViewer/build/libPlaceViewer-x86_64.so src/main/resources/
 cd src/main/resources
 zip libraries.zip libPlaceViewer-x86_64.so
 rm libPlaceViewer-x86_64.so
