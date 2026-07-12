@@ -47,7 +47,7 @@ libary, and a Java component for the Ignite mod.
 ### Dependencies
 #### Debian/Ubuntu
 ```sh
-apt install cmake gcc clang-19 libboost-iostreams-dev openjdk-21-jdk
+apt install cmake gcc-14 g++-14 clang-20 libboost-iostreams-dev openjdk-21-jdk
 ```
 
 ### Clone & Build
@@ -59,7 +59,7 @@ git clone https://github.com/2b2tplace/PlaceViewer.git
 cd PlaceViewer/cpp/PlaceViewer
 
 # choosing clang in this example. you may choose a different compiler if you need
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
 
 # executable should appear at ./build/libPlaceViewer-{arch}.{so/dylib/dll} (value of arch determined by `uname -m`)
 # assuming linux, arch = x86_64 for this example
