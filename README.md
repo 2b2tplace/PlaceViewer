@@ -45,7 +45,10 @@ This project is written in Java 21 and C++23, and uses CMake and Gradle. With th
 libary, and a Java component for the Ignite mod.
 
 ### Dependencies
-- [Boost Iostreams](https://www.boost.org/library/latest/iostreams/)
+#### Debian/Ubuntu
+```sh
+apt install cmake gcc clang-19 libboost-iostreams-dev openjdk-21-jdk
+```
 
 ### Clone & Build
 > Note: These instructions WILL change very soon; this entire build process can be automated in gradle directly.
@@ -56,7 +59,7 @@ git clone https://github.com/2b2tplace/PlaceViewer.git
 cd PlaceViewer/cpp/PlaceViewer
 
 # choosing clang in this example. you may choose a different compiler if you need
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-19 -DCMAKE_CXX_COMPILER=clang++-19
 
 # executable should appear at ./build/libPlaceViewer-{arch}.{so/dylib/dll} (value of arch determined by `uname -m`)
 # assuming linux, arch = x86_64 for this example
