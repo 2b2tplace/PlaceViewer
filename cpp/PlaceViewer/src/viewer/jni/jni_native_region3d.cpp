@@ -145,5 +145,8 @@ JNIEXPORT jlongArray JNICALL Java_dev_place_placeviewer_systems_region_jni_Nativ
 }
 
 JNIEXPORT void JNICALL Java_dev_place_placeviewer_systems_region_jni_NativeRegion_mallocTrim(JNIEnv *, jclass) {
+#if defined(__GLIBC__)
+    // malloc_trim is a glibc-only hint to return free heap to the OS; no-op elsewhere.
     malloc_trim(0);
+#endif
 }
