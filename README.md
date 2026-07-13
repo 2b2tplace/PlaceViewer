@@ -61,7 +61,8 @@ cd PlaceViewer/cpp/PlaceViewer
 # choosing clang in this example. you may choose a different compiler if you need
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
 
-# executable should appear at ./build/libPlaceViewer-{arch}.{so/dylib/dll} (value of arch determined by `uname -m`)
+# shared lib appears in ./build/ as libPlaceViewer-{arch}.so (Linux) / libPlaceViewer-{arch}.dylib (macOS) / PlaceViewer-{arch}.dll (Windows, no "lib" prefix)
+# arch is x86_64 or aarch64 (matches the Java loader); on Linux/macOS it follows `uname -m`
 # assuming linux, arch = x86_64 for this example
 cmake --build build --target PlaceViewer --parallel
 
